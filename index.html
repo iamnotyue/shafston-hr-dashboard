@@ -431,7 +431,7 @@ function FnTab(){
             h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#334155'}),
             h(XAxis,{dataKey:'fn',stroke:'#94A3B8',fontSize:10,interval:0,angle:-45,textAnchor:'end',height:50}),
             h(YAxis,{stroke:'#94A3B8',fontSize:10,tickFormatter:fmtK}),
-            h(Tooltip,{contentStyle:tipStyle,formatter:function(v,n){return [fmtFull(v),n===bKey?'Budget':'Actual'];},labelFormatter:function(l){var d=fnData.find(function(x){return x.fn===l;});return d?d.fn+' ('+d.date+')':l;}}),
+            h(Tooltip,{contentStyle:tipStyle,formatter:function(v,n){return [fmtFull(v),n];},labelFormatter:function(l){var d=fnData.find(function(x){return x.fn===l;});return d?d.fn+' ('+d.date+')':l;}}),
             h(Bar,{dataKey:aKey,fill:'#EF4444',name:'Actual',radius:[4,4,0,0],barSize:14}),
             h(Line,{type:'stepAfter',dataKey:bKey,stroke:'#3B82F6',strokeWidth:2,dot:false,name:'Budget'})
           )
