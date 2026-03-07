@@ -572,6 +572,7 @@ function StaffTab(){
   var pvState=useState('gross');var payView=pvState[0];var setPayView=pvState[1];
   var viewLabel=payView==='gross'?'Gross Pay (before tax)':payView==='net'?'Net Pay (est. after PAYG tax)':'Superannuation (12%)';
   var viewColor=payView==='gross'?'#60A5FA':payView==='net'?'#10B981':'#F59E0B';
+  var vetPVState=useState('gross');var vetPV=vetPVState[0];var setVetPV=vetPVState[1];
 
   return h('div',null,
     /* Pay View Filter */
@@ -797,54 +798,98 @@ function StaffTab(){
         'Gross pay (invoice total for contractors). 50/50 model: employees get 12% super, contractors invoice-based (no super). Fn1 low due to Christmas shutdown (~2.25 wks).')
     ),
 
-    /* VET Teaching — P&L Reconciliation */
+    /* VET Teaching — Budget vs Actual */
     h('div',{style:S.section},
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
-        h('span',null,'VET Teaching \u2014 Budget vs P&L'),
-        h('span',{style:{fontSize:13,fontWeight:500,color:'#10B981'}},'Budget (Lena): '+fmtFull(VET_BYR)+'/yr = $85K wages + $10.2K super')
+        h('span',null,'VET Teaching \u2014 Budget vs Actual'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#10B981'}},'Budget: '+fmtFull(VET_BYR)+'/yr = $85K wages + $10.2K super')
       ),
-      /* KPI cards */
-      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
-        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD (Lena wages)'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#10B981'}},fmtFull(LENA_GR_FN*nFnDone)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+LENA_GR_FN.toLocaleString()+'/fn \xD7 '+nFnDone+' fn')
-        ),
-        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Lena Actual (payroll)'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(LENA_GR_FN*nFnDone)),
-          h('div',{style:{fontSize:10,color:'#10B981'}},'\u2714 On budget')
-        ),
-        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L VET Total (wages)'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#F59E0B'}},fmtFull(VET_PNL_TOTAL)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'All VET accounts ex-super')
-        ),
-        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid rgba(239,68,68,0.2)'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Non-Budget Variance'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#EF4444'}},'+'+fmtFull(VET_PNL_TOTAL-LENA_GR_FN*nFnDone)),
-          h('div',{style:{fontSize:10,color:'#EF4444'}},'Casuals + agency fees')
-        )
+      /* Pay View filter */
+      h('div',{style:Object.assign({},S.filterBar,{marginBottom:16})},
+        h('span',{style:S.filterLabel},'Pay View:'),
+        [{key:'gross',label:'Gross Pay'},{key:'net',label:'Net Pay'}].map(function(v){
+          return h('button',{key:v.key,style:vetPV===v.key?S.chipActive:S.chip,onClick:function(){setVetPV(v.key);}},v.label);
+        }),
+        h('span',{style:{fontSize:11,color:'#64748B',marginLeft:12}},'Showing: '+(vetPV==='gross'?'Before tax':'Est. after PAYG tax'))
       ),
+      /* 3 KPI cards */
+      (function(){
+        var vBytd=VET_BFN*nFnDone;
+        var vAytd=0;for(var i=0;i<nFnDone;i++)vAytd+=VET_ACT[i];
+        var vVar=vAytd-vBytd;var vVarPct=vBytd>0?(vVar/vBytd*100):0;
+        /* For net view: budget is Lena only, effective tax ~21% on $85k */
+        var vetTaxRate=calcTax(85000)/85000;
+        var dispBudget=vetPV==='gross'?vBytd:Math.round(vBytd/(1.12)*(1-vetTaxRate));
+        var dispActual=vetPV==='gross'?vAytd:Math.round(vAytd/(1.12)*(1-vetTaxRate));
+        var dispVar=dispActual-dispBudget;var dispVarPct=dispBudget>0?(dispVar/dispBudget*100):0;
+        return h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
+          h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
+            h('div',{style:{fontSize:20,fontWeight:700,color:'#10B981'}},fmtFull(dispBudget)),
+            h('div',{style:{fontSize:10,color:'#64748B'}},'$'+VET_BFN.toLocaleString()+'/fn total cost')
+          ),
+          h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Actual YTD ('+nFnDone+' fn)'),
+            h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(dispActual)),
+            h('div',{style:{fontSize:10,color:'#64748B'}},'Payroll: budget + casuals')
+          ),
+          h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(dispVar>0?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)')}},
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
+            h('div',{style:{fontSize:20,fontWeight:700,color:dispVar>0?'#EF4444':'#10B981'}},fmtFull(dispVar)),
+            h('div',{style:{fontSize:10,color:dispVar>0?'#EF4444':'#10B981'}},fmtPct(dispVarPct)+' '+(dispVar>0?'over budget':'under budget'))
+          )
+        );
+      })(),
+      /* Fortnightly Trend Chart — Budget vs Actual */
+      (function(){
+        var vetFnData=[];
+        for(var i=0;i<Math.min(10,26);i++){
+          var bud=VET_BFN;var act=i<=CURRENT_FN?VET_ACT[i]:null;
+          var vetTR=calcTax(85000)/85000;
+          if(vetPV==='net'){bud=Math.round(bud/1.12*(1-vetTR));act=act!=null?Math.round(act/1.12*(1-vetTR)):null;}
+          vetFnData.push({fn:'Fn'+(i+1),budget:bud,actual:act});
+        }
+        return h('div',{style:{marginBottom:16}},
+          h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual'),
+          h(ResponsiveContainer,{width:'100%',height:200},
+            h(ComposedChart,{data:vetFnData,margin:{top:5,right:10,left:10,bottom:5}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
+              h(XAxis,{dataKey:'fn',tick:{fill:'#94A3B8',fontSize:11}}),
+              h(YAxis,{tick:{fill:'#94A3B8',fontSize:11},tickFormatter:function(v){return'$'+Math.round(v/1000)+'K';}}),
+              h(Tooltip,{contentStyle:{background:'#1E293B',border:'1px solid #334155',borderRadius:8},
+                formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget':'Actual'];},
+                labelStyle:{color:'#94A3B8'}}),
+              h(ReferenceLine,{y:vetPV==='gross'?VET_BFN:Math.round(VET_BFN/1.12*(1-calcTax(85000)/85000)),stroke:'#10B981',strokeDasharray:'5 5',label:{value:'Budget',fill:'#10B981',fontSize:10,position:'right'}}),
+              h(Bar,{dataKey:'actual',fill:'#06B6D4',radius:[4,4,0,0],name:'Actual'},
+                vetFnData.map(function(d,i){
+                  var overBudget=d.actual!=null&&d.actual>d.budget;
+                  return h(Cell,{key:i,fill:d.actual==null?'transparent':overBudget?'#EF4444':'#06B6D4'});
+                })
+              )
+            )
+          )
+        );
+      })(),
       /* P&L Account Breakdown Table */
+      h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'P&L Account Breakdown (Xero Cash Basis)'),
       h('table',{style:S.table},
         h('thead',null,
           h('tr',null,
             h('th',{style:S.th},'P&L Account'),
-            h('th',{style:S.thR},'YTD Actual'),
-            h('th',{style:S.thR},'Lena (Budget)'),
+            h('th',{style:S.thR},'Actual'),
+            h('th',{style:S.thR},'Budget'),
             h('th',{style:S.thR},'Non-Budget'),
             h('th',{style:S.th},'Notes')
           )
         ),
         h('tbody',null,
           VET_PNL.map(function(a,i){
-            var lena=a.code==='HR04'?LENA_GR_FN*nFnDone:0;
-            var nb=a.ytd-lena;
+            var budgetAmt=a.code==='HR04'?LENA_GR_FN*nFnDone:0;
+            var nb=a.ytd-budgetAmt;
             return h('tr',{key:i,style:a.ytd===0?{opacity:0.5}:{}},
               h('td',{style:S.td},h('span',{style:{color:'#64748B',fontSize:11,marginRight:6}},a.code),' ',a.name),
               h('td',{style:S.tdR},a.ytd>0?fmtFull(a.ytd):'\u2014'),
-              h('td',{style:Object.assign({},S.tdR,{color:'#10B981'})},lena>0?fmtFull(lena):'\u2014'),
+              h('td',{style:Object.assign({},S.tdR,{color:'#10B981'})},budgetAmt>0?fmtFull(budgetAmt):'\u2014'),
               h('td',{style:Object.assign({},S.tdR,{color:nb>0?'#EF4444':'#94A3B8'})},nb>0?fmtFull(nb):'\u2014'),
               h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
             );
@@ -859,39 +904,62 @@ function StaffTab(){
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (Shafston International). Super under general Superannuation, not in VET category. Non-budget items: casual teachers (Ram/Ben/Pelin on Fn-VET payroll) + Ready Teacher agency fees.')
-    ),
-
-    /* VET Payroll Staff Detail */
-    h('div',{style:Object.assign({},S.section,{marginTop:8})},
-      h('div',{style:S.sectionTitle},'VET Payroll Staff Detail'),
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (Shafston International). Super under general Superannuation account, not in VET P&L. Non-budget = casual teachers + agency fees.'),
+      /* Staff Detail Table */
+      h('div',{style:{marginTop:16,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Staff Detail'),
       h('table',{style:S.table},
         h('thead',null,
           h('tr',null,
             h('th',{style:S.th},'Name'),
             h('th',{style:S.th},'Role'),
-            h('th',{style:S.th},'Campus'),
             h('th',{style:S.th},'Type'),
             h('th',{style:S.thR},'Jan'),
             h('th',{style:S.thR},'Feb'),
-            h('th',{style:S.th},'Status')
+            h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD'),
+            h('th',{style:S.th},'Notes')
           )
         ),
         h('tbody',null,
           VET_STAFF.map(function(s,i){
             var departed=s.tot===0&&s.f===0;
+            var isBudget=s.tot>0;
+            /* Gross/Net conversion: strip 12% super, then apply tax */
+            var jG=Math.round(s.j/1.12);var fG=Math.round(s.f/1.12);
+            var tr=s.sal>0?calcTax(s.sal)/s.sal:calcTax(50000)/50000;
+            var jN=Math.round(jG*(1-tr));var fN=Math.round(fG*(1-tr));
+            var jVal=vetPV==='gross'?jG:jN;var fVal=vetPV==='gross'?fG:fN;
+            var ytdVal=jVal+fVal;
             return h('tr',{key:i,style:departed?{opacity:0.5}:{}},
               h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
               h('td',{style:S.td},s.r),
-              h('td',{style:S.td},s.l),
-              h('td',{style:S.td},s.tot>0?h('span',{style:Object.assign({},S.tag,{background:'rgba(16,185,129,0.15)',color:'#10B981',border:'1px solid #10B981'})},'Budget'):h('span',{style:Object.assign({},S.tag,{background:'rgba(239,68,68,0.15)',color:'#EF4444',border:'1px solid #EF4444'})},'Non-budget')),
-              h('td',{style:S.tdR},s.j>0?fmtFull(s.j):'\u2014'),
-              h('td',{style:S.tdR},s.f>0?fmtFull(s.f):'\u2014'),
+              h('td',{style:S.td},isBudget?h('span',{style:Object.assign({},S.tag,{background:'rgba(16,185,129,0.15)',color:'#10B981',border:'1px solid #10B981'})},'Budget'):h('span',{style:Object.assign({},S.tag,{background:'rgba(239,68,68,0.15)',color:'#EF4444',border:'1px solid #EF4444'})},'Non-budget')),
+              h('td',{style:S.tdR},jVal>0?fmtFull(jVal):'\u2014'),
+              h('td',{style:S.tdR},fVal>0?fmtFull(fVal):'\u2014'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},ytdVal>0?fmtFull(ytdVal):'\u2014'),
               h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},s.nt||'')
             );
-          })
+          }),
+          (function(){
+            var tJ=0,tF=0;
+            VET_STAFF.forEach(function(s){
+              var jG=Math.round(s.j/1.12);var fG=Math.round(s.f/1.12);
+              var tr=s.sal>0?calcTax(s.sal)/s.sal:calcTax(50000)/50000;
+              tJ+=vetPV==='gross'?jG:Math.round(jG*(1-tr));
+              tF+=vetPV==='gross'?fG:Math.round(fG*(1-tr));
+            });
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+              h('td',{style:S.td},''),h('td',{style:S.td},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ+tF)),
+              h('td',{style:S.td},'')
+            );
+          })()
         )
-      )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        vetPV==='net'?'Net pay est. using 2025-26 ATO brackets + 2% Medicare. Casuals estimated at $50K equivalent. Super (12%) stripped from all totals before tax calc.':'Gross = total cost minus 12% super. Budget staff: salaried. Non-budget: casual teachers + agency.')
     )
   );
 }
