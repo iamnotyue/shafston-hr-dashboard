@@ -910,7 +910,7 @@ function StaffTab(){
       (function(){
         var vetFnData=[];
         for(var i=0;i<26;i++){
-          var bud=vetPV==='gross'?LENA_GR_FN:LENA_NET_FN;
+          var bud=LENA_GR_FN;
           var act=i<=CURRENT_FN?VET_ACT[i]:null;
           vetFnData.push({fn:'Fn'+(i+1),budget:bud,actual:act});
         }
@@ -934,7 +934,7 @@ function StaffTab(){
             )
           ),
           h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-            vetPV==='net'?'Budget baseline = Lena net $'+LENA_NET_FN.toLocaleString()+'/fn. Actual bars = total VET payroll cost (all staff). Red = over budget.':'Budget = $'+LENA_GR_FN.toLocaleString()+'/fn gross wages. Red bars = over budget (casuals). Blue = budget baseline.')
+            'Budget = $'+LENA_GR_FN.toLocaleString()+'/fn gross wages. Red bars = over budget (casuals). Blue = budget baseline.')
         );
       })()
     )
