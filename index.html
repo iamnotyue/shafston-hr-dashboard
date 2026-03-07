@@ -1179,25 +1179,20 @@ var SUP_BUD_EL = 19883;
 
 function SuperTab(){
   /* Compute totals */
-  var outTotal=SUP_2025_OUT.bne+SUP_2025_OUT.syd;
+  var grossOut=SUP_2025_OUT.bne+SUP_2025_OUT.syd; /* original 2025 liability $118,662 */
   var newYTD=0;var paidYTD=0;var nMoDone=0;
   SUP_ACT.forEach(function(m){
     if(m.bne!==null){newYTD+=m.bne+m.syd;paidYTD+=(m.paid||0);nMoDone++;}
   });
-  var curPayable=outTotal+newYTD-paidYTD;
+  /* 2025 Outstanding = original liability minus payments already made toward it */
+  var outOverdue=grossOut-paidYTD; /* $118,662 - $49,375 = $69,287 */
+  var curPayable=outOverdue+newYTD; /* overdue + new accruals = total payable */
   var budYTD=SUP_BMO*nMoDone;
 
   /* Chart data — new super per month vs budget */
   var chartData=SUP_ACT.map(function(m){
     var act=m.bne!==null?(m.bne+m.syd):null;
     return{mo:m.mo,budget:SUP_BMO,actual:act};
-  });
-
-  /* Running balance for table */
-  var balances=[];var runBal=outTotal;
-  SUP_ACT.forEach(function(m){
-    if(m.bne!==null){runBal+=m.bne+m.syd-(m.paid||0);}
-    balances.push(runBal);
   });
 
   return h('div',null,
@@ -1207,27 +1202,22 @@ function SuperTab(){
         h('span',null,'Superannuation Payable Tracker'),
         h('span',{style:{fontSize:13,fontWeight:500,color:'#A78BFA'}},'Budget: $'+Math.round(SUP_BYR/1000)+'K/yr | Acct 826')
       ),
-      /* 4 KPI cards */
-      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
+      /* 3 KPI cards */
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid rgba(239,68,68,0.3)'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2025 Outstanding'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#EF4444'}},fmtFull(outTotal)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'BNE $'+Math.round(SUP_2025_OUT.bne/1000)+'K + SYD $'+Math.round(SUP_2025_OUT.syd/1000)+'K')
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2025 Overdue'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#EF4444'}},fmtFull(outOverdue)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+Math.round(grossOut/1000)+'K orig \u2212 $'+Math.round(paidYTD/1000)+'K paid')
         ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2026 New Super ('+nMoDone+'mo)'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(newYTD)),
           h('div',{style:{fontSize:10,color:'#64748B'}},'Payroll accruals Jan\u2013'+(nMoDone>0?SUP_ACT[nMoDone-1].mo:''))
         ),
-        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid rgba(16,185,129,0.3)'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2026 Payments Made'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#10B981'}},fmtFull(paidYTD)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'Super fund payments YTD')
-        ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid rgba(251,191,36,0.3)'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Current Payable'),
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Total Payable'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#FBBF24'}},fmtFull(curPayable)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'Balance Sheet liability (BNE+SYD)')
+          h('div',{style:{fontSize:10,color:'#64748B'}},'Overdue + new accruals (BS liability)')
         )
       ),
       /* Budget Breakdown by Category */
@@ -1278,66 +1268,50 @@ function SuperTab(){
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
         'Super rate: 12% for employees. Contractors (Peter, Sophia, Cassie, Woojeung, Joseph, Kathryn) = 0%. ELICOS 6% effective = 50% employee mix.'),
-      /* Monthly Super Payable Table */
-      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Monthly Superannuation Payable \u2014 New Accruals, Payments & Balance'),
+      /* Monthly Super Table — simplified: Month | Payable | Budget | Variance | Notes */
+      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Monthly Superannuation \u2014 Payable vs Budget'),
       h('table',{style:S.table},
         h('thead',null,h('tr',null,
-          h('th',{style:S.th},'Period'),
-          h('th',{style:S.thR},'BNE New'),
-          h('th',{style:S.thR},'SYD New'),
-          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'Total New'),
-          h('th',{style:Object.assign({},S.thR,{color:'#10B981'})},'Payments'),
-          h('th',{style:Object.assign({},S.thR,{color:'#FBBF24'})},'Balance'),
+          h('th',{style:S.th},'Month'),
+          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'Payable'),
+          h('th',{style:Object.assign({},S.thR,{color:'#A78BFA'})},'Budget'),
+          h('th',{style:S.thR},'Variance'),
           h('th',{style:S.th},'Notes')
         )),
         h('tbody',null,
-          /* 2025 Outstanding row */
-          h('tr',{style:{background:'rgba(239,68,68,0.08)'}},
-            h('td',{style:Object.assign({},S.td,{fontWeight:700,color:'#EF4444'})},'2025 O/S'),
-            h('td',{style:Object.assign({},S.tdR,{color:'#EF4444'})},fmtFull(SUP_2025_OUT.bne)),
-            h('td',{style:Object.assign({},S.tdR,{color:'#EF4444'})},fmtFull(SUP_2025_OUT.syd)),
-            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#EF4444'})},fmtFull(outTotal)),
-            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'\u2014'),
-            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#FBBF24'})},fmtFull(outTotal)),
-            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Unpaid super as of 1 Jan 2026')
-          ),
-          /* Monthly rows */
+          /* Monthly rows — no 2025 O/S row */
           SUP_ACT.map(function(m,i){
             if(m.bne===null)return h('tr',{key:i,style:{opacity:0.3}},
               h('td',{style:S.td},m.mo),
-              h('td',{style:S.tdR},'\u2014'),h('td',{style:S.tdR},'\u2014'),
-              h('td',{style:S.tdR},'\u2014'),h('td',{style:S.tdR},'\u2014'),
+              h('td',{style:S.tdR},'\u2014'),h('td',{style:S.tdR},fmtFull(SUP_BMO)),
               h('td',{style:S.tdR},'\u2014'),h('td',{style:S.td},'')
             );
-            var total=m.bne+m.syd;
+            var payable=m.bne+m.syd;
+            var variance=payable-SUP_BMO;
             var note='';
-            if(m.mo==='Jan'&&m.paid>0)note='BNE SuperChoice $1,087';
-            if(m.mo==='Feb')note='BNE: Q4\'25 $20,652 + catch-up $27,637';
             if(m.mo==='Mar')note='Partial month (1 pay run)';
             return h('tr',{key:i},
               h('td',{style:Object.assign({},S.td,{fontWeight:600})},m.mo),
-              h('td',{style:S.tdR},fmtFull(m.bne)),
-              h('td',{style:S.tdR},fmtFull(m.syd)),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(total)),
-              h('td',{style:Object.assign({},S.tdR,{color:m.paid>0?'#10B981':'#64748B'})},m.paid>0?'-'+fmtFull(m.paid):'$0'),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#FBBF24'})},fmtFull(balances[i])),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(payable)),
+              h('td',{style:Object.assign({},S.tdR,{color:'#A78BFA'})},fmtFull(SUP_BMO)),
+              h('td',{style:Object.assign({},S.tdR,{color:variance>0?'#EF4444':'#10B981'})},
+                (variance>0?'+':'')+fmtFull(variance)),
               h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},note)
             );
           }),
           /* YTD totals row */
           h('tr',{style:{background:'#0F172A',fontWeight:700}},
             h('td',{style:Object.assign({},S.td,{fontWeight:700})},'YTD Total'),
-            h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(SUP_ACT.reduce(function(s,m){return s+(m.bne||0);},0))),
-            h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(SUP_ACT.reduce(function(s,m){return s+(m.syd||0);},0))),
             h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#60A5FA'})},fmtFull(newYTD)),
-            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#10B981'})},'-'+fmtFull(paidYTD)),
-            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#FBBF24'})},fmtFull(curPayable)),
-            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'= Balance Sheet payable')
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#A78BFA'})},fmtFull(budYTD)),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:newYTD-budYTD>0?'#EF4444':'#10B981'})},
+              (newYTD-budYTD>0?'+':'')+fmtFull(newYTD-budYTD)),
+            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget $'+Math.round(budYTD/1000)+'K for '+nMoDone+' months')
           )
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Source: Xero Super Payable (acct 826) journal transactions. New = payroll accruals. Payments = super fund transfers. Balance = current liability. Q1 2026 super due 28 Apr.'),
+        'Source: Xero Super Payable (acct 826). Payable = BNE + SYD new accruals from payroll. Q1 2026 super due 28 Apr.'),
       /* Monthly Trend Chart */
       (function(){
         return h('div',{style:{marginTop:20}},
