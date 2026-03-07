@@ -112,6 +112,14 @@ var EL_PNL = [
 ];
 var EL_PNL_TOTAL = 96408; /* Total ELICOS P&L wages (ex-super), BNE+SYD */
 var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contractor × 0% */
+var EL_WAGES_BYR = 331380; /* Annual wages ex-super */
+var EL_SHIFT = [
+  {prog:'HSP BNE',cls:2,w25:13,w20:37,twk:50,gh:2130,ph:-52,nh:2078,cost:145460},
+  {prog:'HSP SYD',cls:1,w25:13,w20:37,twk:50,gh:1065,ph:-18,nh:1047,cost:73290},
+  {prog:'HSP GC',cls:1,w25:13,w20:0,twk:13,gh:325,ph:-10,nh:315,cost:22050},
+  {prog:'PEP BNE',cls:1,w25:13,w20:27,twk:40,gh:865,ph:-22,nh:843,cost:59010},
+  {prog:'PEP SYD',cls:1,w25:13,w20:7,twk:20,gh:465,ph:-14,nh:451,cost:31570}
+];
 
 /* General Staff Roster — 14 people */
 var GS_STAFF = [
@@ -964,7 +972,200 @@ function VetTab(){
   );
 }
 
-/* ========== TAB 6: GENERAL STAFF (HR-General Staff P&L) ========== */
+/* ========== TAB 6: ELICOS TEACHING ========== */
+function ElicosTab(){
+  /* Budget YTD = sum of variable EL_BFN for done fortnights */
+  var elBudYTD=0;for(var i=0;i<nFnDone;i++){elBudYTD+=EL_BFN[i];}
+  var elActYTD=EL_PNL_TOTAL;
+  var elVr=elActYTD-elBudYTD;var elVrPct=elBudYTD>0?(elVr/elBudYTD*100):0;
+
+  return h('div',null,
+    h('div',{style:S.section},
+      /* Title */
+      h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
+        h('span',null,'ELICOS Teaching \u2014 Budget vs Actual'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#F59E0B'}},'Budget: $'+Math.round(EL_BYR/1000)+'K/yr (inc. 6% super) \u00b7 6 classes')
+      ),
+      /* 4 KPI cards */
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Annual Budget'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#F59E0B'}},'$'+Math.round(EL_BYR/1000)+'K'),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+Math.round(EL_WAGES_BYR/1000)+'K wages + $'+Math.round((EL_BYR-EL_WAGES_BYR)/1000)+'K super (6%)')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#F59E0B'}},fmtFull(elBudYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'Variable per fn (25hr\u219220hr schedule)')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(elActYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'Xero Cash Basis (BNE+SYD)')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(elVr>0?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)')}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:elVr>0?'#EF4444':'#10B981'}},fmtFull(elVr)),
+          h('div',{style:{fontSize:10,color:elVr>0?'#EF4444':'#10B981'}},fmtPct(elVrPct)+' '+(elVr>0?'over budget':'under budget'))
+        )
+      ),
+      /* ELICOS Teaching Shift Table */
+      h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'ELICOS Teaching Shift \u2014 2026 Annual Plan'),
+      h('table',{style:S.table},
+        h('thead',null,h('tr',null,
+          h('th',{style:S.th},'Program'),
+          h('th',{style:S.thR},'Classes'),
+          h('th',{style:S.thR},'25hr Wks'),
+          h('th',{style:S.thR},'20hr Wks'),
+          h('th',{style:S.thR},'Total Wks'),
+          h('th',{style:S.thR},'Gross Hrs'),
+          h('th',{style:S.thR},'PH Deduct'),
+          h('th',{style:S.thR},'Net Hrs'),
+          h('th',{style:S.thR},'\u00d7$70')
+        )),
+        h('tbody',null,
+          EL_SHIFT.map(function(s,i){
+            return h('tr',{key:i},
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.prog),
+              h('td',{style:S.tdR},s.cls),
+              h('td',{style:S.tdR},s.w25),
+              h('td',{style:S.tdR},s.w20||'\u2014'),
+              h('td',{style:S.tdR},s.twk),
+              h('td',{style:S.tdR},s.gh.toLocaleString()),
+              h('td',{style:Object.assign({},S.tdR,{color:'#EF4444'})},s.ph),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},s.nh.toLocaleString()),
+              h('td',{style:Object.assign({},S.tdR,{color:'#F59E0B',fontWeight:600})},'$'+s.cost.toLocaleString())
+            );
+          }),
+          (function(){
+            var tCls=0,tGh=0,tPh=0,tNh=0,tCost=0;
+            EL_SHIFT.forEach(function(s){tCls+=s.cls;tGh+=s.gh;tPh+=s.ph;tNh+=s.nh;tCost+=s.cost;});
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tCls),
+              h('td',{style:S.tdR},''),h('td',{style:S.tdR},''),h('td',{style:S.tdR},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tGh.toLocaleString()),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#EF4444'})},tPh),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tNh.toLocaleString()),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#F59E0B'})},'$'+tCost.toLocaleString())
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        'Rate: $70/hr blended (50% employee + 50% contractor). 25hr/class/wk until Apr 3, then 20hr from Apr 6. GC stops Apr 6. PH = public holiday deductions.'),
+      /* P&L Account Breakdown */
+      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'P&L Account Breakdown (Xero Cash Basis)'),
+      h('table',{style:S.table},
+        h('thead',null,h('tr',null,
+          h('th',{style:S.th},'Source'),
+          h('th',{style:S.th},'P&L Account'),
+          h('th',{style:S.thR},'YTD Actual'),
+          h('th',{style:S.th},'Notes')
+        )),
+        h('tbody',null,
+          EL_PNL.map(function(a,i){
+            return h('tr',{key:i},
+              h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid '+(a.src==='BNE'?'#3B82F6':'#8B5CF6'),color:a.src==='BNE'?'#3B82F6':'#8B5CF6'}},a.src)),
+              h('td',{style:S.td},a.name),
+              h('td',{style:S.tdR},fmtFull(a.ytd)),
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
+            );
+          }),
+          (function(){
+            var tv=elActYTD-elBudYTD;
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:S.td},''),
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(elActYTD)),
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget YTD: '+fmtFull(elBudYTD)+' | Variance: '+((tv>0?'+':'')+fmtFull(tv)))
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (BNE + SYD tenants). Budget is variable per fn based on teaching shift schedule.'),
+      /* ELICOS Teaching Staff List */
+      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'ELICOS Teaching Staff ('+EL_STAFF.length+' people)'),
+      h('table',{style:S.table},
+        h('thead',null,h('tr',null,
+          h('th',{style:S.th},'#'),
+          h('th',{style:S.th},'Name'),
+          h('th',{style:S.th},'Type'),
+          h('th',{style:S.th},'Location'),
+          h('th',{style:S.thR},'Rate/hr'),
+          h('th',{style:S.thR},'Jan'),
+          h('th',{style:S.thR},'Feb'),
+          h('th',{style:S.thR},'Mar'),
+          h('th',{style:Object.assign({},S.thR,{color:'#F59E0B'})},'YTD'),
+          h('th',{style:S.th},'Status')
+        )),
+        h('tbody',null,
+          EL_STAFF.map(function(s,i){
+            var ytd=s.j+s.f+(s.m||0);
+            var tc=s.r.indexOf('Contractor')>=0?'#F59E0B':s.r.indexOf('Casual')>=0?'#8B5CF6':'#3B82F6';
+            return h('tr',{key:i,style:s.s==='Jan only'?{opacity:0.5}:{}},
+              h('td',{style:S.td},i+1),
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
+              h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid '+tc,color:tc}},s.r)),
+              h('td',{style:S.td},s.l),
+              h('td',{style:S.tdR},'$'+s.rate),
+              h('td',{style:S.tdR},fmtFull(s.j)),
+              h('td',{style:S.tdR},fmtFull(s.f)),
+              h('td',{style:S.tdR},fmtFull(s.m||0)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#F59E0B'})},fmtFull(ytd)),
+              h('td',{style:Object.assign({},S.td,{fontSize:11,color:s.s==='Ongoing'?'#10B981':'#EF4444'})},s.s)
+            );
+          }),
+          (function(){
+            var tJ=0,tF=0,tM=0;
+            EL_STAFF.forEach(function(s){tJ+=s.j;tF+=s.f;tM+=(s.m||0);});
+            var tYTD=tJ+tF+tM;
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:S.td},''),
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+              h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tM)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#F59E0B'})},fmtFull(tYTD)),
+              h('td',{style:S.td},'')
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        nFnDone+' fortnights: Jan (2fn) + Feb (2fn) + Mar 5 (1fn). Net pay from Xero payroll (BNE+SYD). Contractors: Joseph, Mila, Kathryn.'),
+      /* Fortnightly Trend Chart — amber budget bars + red actual bars (like GS pattern) */
+      (function(){
+        var elFnData=[];
+        for(var i=0;i<26;i++){
+          elFnData.push({fn:'Fn'+(i+1),budget:EL_BFN[i],actual:i<=CURRENT_FN?EL_ACT[i]:null});
+        }
+        return h('div',{style:{marginTop:20}},
+          h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual'),
+          h(ResponsiveContainer,{width:'100%',height:280},
+            h(BarChart,{data:elFnData,margin:{top:5,right:10,left:10,bottom:5}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
+              h(XAxis,{dataKey:'fn',tick:{fill:'#94A3B8',fontSize:10},interval:1}),
+              h(YAxis,{tick:{fill:'#94A3B8',fontSize:11},tickFormatter:function(v){return'$'+Math.round(v/1000)+'K';},domain:[0,'dataMax+5000']}),
+              h(Tooltip,{contentStyle:tipStyle,
+                formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget/fn':'Actual/fn'];},
+                labelStyle:{color:'#94A3B8'}}),
+              h(Legend,{wrapperStyle:{fontSize:11,color:'#94A3B8'}}),
+              h(Bar,{dataKey:'budget',fill:'#F59E0B',radius:[4,4,0,0],name:'Budget',opacity:0.6}),
+              h(Bar,{dataKey:'actual',fill:'#EF4444',radius:[4,4,0,0],name:'Actual'})
+            )
+          ),
+          h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+            'Budget varies per fn: 25hr/wk ($22K/fn) until Fn6, then 20hr ($15K/fn). GC stops Fn6. Actual = Xero cash-basis journals mapped to fortnights.')
+        );
+      })()
+    )
+  );
+}
+
+/* ========== TAB 7: GENERAL STAFF (HR-General Staff P&L) ========== */
 function GsTab(){
   var pvS=useState('gross');var gsPV=pvS[0];var setGsPV=pvS[1];
   var fpYTD=0;for(var fi=0;fi<nFnDone;fi++){fpYTD+=(GS_FP[fi]||0);}
@@ -1170,7 +1371,7 @@ function GsTab(){
 }
 
 /* ========== MAIN APP ========== */
-var TABS = ['YTD Overview','Fortnightly','Monthly','Staff Detail','VET Teaching','General Staff'];
+var TABS = ['YTD Overview','Fortnightly','Monthly','Staff Detail','VET Teaching','ELICOS Teaching','General Staff'];
 
 function App(){
   var state=useState(0);var activeTab=state[0];var setTab=state[1];
@@ -1186,7 +1387,8 @@ function App(){
     case 2:tabContent=h(MonthTab);break;
     case 3:tabContent=h(StaffTab);break;
     case 4:tabContent=h(VetTab);break;
-    case 5:tabContent=h(GsTab);break;
+    case 5:tabContent=h(ElicosTab);break;
+    case 6:tabContent=h(GsTab);break;
     default:tabContent=h(YtdTab);
   }
 
