@@ -911,7 +911,7 @@ function StaffTab(){
         var vetFnData=[];
         for(var i=0;i<26;i++){
           var bud=vetPV==='gross'?LENA_GR_FN:LENA_NET_FN;
-          var act=i<=CURRENT_FN?(vetPV==='gross'?VET_ACT[i]:LENA_NET_FN):null;
+          var act=i<=CURRENT_FN?VET_ACT[i]:null;
           vetFnData.push({fn:'Fn'+(i+1),budget:bud,actual:act});
         }
         return h('div',{style:{marginTop:16}},
@@ -934,7 +934,7 @@ function StaffTab(){
             )
           ),
           h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-            vetPV==='net'?'Net pay = $'+LENA_NET_FN.toLocaleString()+'/fn actual from Xero payslips (PAYG tax $'+LENA_TAX_FN+'/fn). Net view shows Lena only.':'Budget = $'+LENA_GR_FN.toLocaleString()+'/fn gross wages. Red bars = over budget (casuals). Blue = budget baseline.')
+            vetPV==='net'?'Budget baseline = Lena net $'+LENA_NET_FN.toLocaleString()+'/fn. Actual bars = total VET payroll cost (all staff). Red = over budget.':'Budget = $'+LENA_GR_FN.toLocaleString()+'/fn gross wages. Red bars = over budget (casuals). Blue = budget baseline.')
         );
       })()
     )
