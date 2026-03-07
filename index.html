@@ -1151,8 +1151,198 @@ function GsTab(){
   );
 }
 
+/* ========== TAB: SUPERANNUATION ========== */
+/* Monthly actuals: BNE SL03 + QSL03 + SYD Superannuation (Cash Basis) */
+var SUP_ACT = [
+  {mo:'Jan',bne:9479,qsl:0,syd:3205},
+  {mo:'Feb',bne:9301,qsl:0,syd:11936},
+  {mo:'Mar',bne:4811,qsl:0,syd:10587},
+  {mo:'Apr',bne:null,qsl:null,syd:null},
+  {mo:'May',bne:null,qsl:null,syd:null},
+  {mo:'Jun',bne:null,qsl:null,syd:null},
+  {mo:'Jul',bne:null,qsl:null,syd:null},
+  {mo:'Aug',bne:null,qsl:null,syd:null},
+  {mo:'Sep',bne:null,qsl:null,syd:null},
+  {mo:'Oct',bne:null,qsl:null,syd:null},
+  {mo:'Nov',bne:null,qsl:null,syd:null},
+  {mo:'Dec',bne:null,qsl:null,syd:null}
+];
+/* Budget: GS $87,216 + VET $10,200 + ELICOS $19,883 = $117,299/yr */
+var SUP_BYR = 117299;
+var SUP_BMO = Math.round(SUP_BYR/12); /* $9,775/mo */
+/* Budget breakdown by category */
+var SUP_BUD_GS = 87216;
+var SUP_BUD_VET = 10200;
+var SUP_BUD_EL = 19883;
+
+function SuperTab(){
+  /* Compute YTD totals */
+  var actYTD=0;var budYTD=0;var nMoDone=0;
+  SUP_ACT.forEach(function(m){
+    if(m.bne!==null){actYTD+=m.bne+(m.qsl||0)+m.syd;nMoDone++;}
+  });
+  budYTD=SUP_BMO*nMoDone;
+  var vr=actYTD-budYTD;var vrPct=budYTD>0?(vr/budYTD*100):0;
+
+  /* Chart data */
+  var chartData=SUP_ACT.map(function(m){
+    var act=m.bne!==null?(m.bne+(m.qsl||0)+m.syd):null;
+    return{mo:m.mo,budget:SUP_BMO,actual:act};
+  });
+
+  return h('div',null,
+    h('div',{style:S.section},
+      /* Title */
+      h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
+        h('span',null,'Superannuation \u2014 Budget vs Actual'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#A78BFA'}},'Budget: $'+Math.round(SUP_BYR/1000)+'K/yr (12% of eligible wages)')
+      ),
+      /* 3 KPI cards */
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nMoDone+' months)'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#A78BFA'}},fmtFull(budYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+SUP_BMO.toLocaleString()+'/mo straight-line')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(actYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'SL03 + QSL03 (BNE) + SYD Super')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(vr>0?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)')}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:vr>0?'#EF4444':'#10B981'}},fmtFull(vr)),
+          h('div',{style:{fontSize:10,color:vr>0?'#EF4444':'#10B981'}},fmtPct(vrPct)+' '+(vr>0?'over budget':'under budget'))
+        )
+      ),
+      /* Budget Breakdown by Category */
+      h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Annual Super Budget Breakdown'),
+      h('table',{style:S.table},
+        h('thead',null,h('tr',null,
+          h('th',{style:S.th},'Category'),
+          h('th',{style:S.thR},'Eligible Wages/yr'),
+          h('th',{style:S.thR},'Super Rate'),
+          h('th',{style:S.thR},'Super Budget/yr'),
+          h('th',{style:S.thR},'Monthly'),
+          h('th',{style:S.th},'Notes')
+        )),
+        h('tbody',null,
+          h('tr',null,
+            h('td',{style:Object.assign({},S.td,{fontWeight:600})},'General Staff'),
+            h('td',{style:S.tdR},'$726,801'),
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'12%'),
+            h('td',{style:Object.assign({},S.tdR,{color:'#A78BFA'})},fmtFull(SUP_BUD_GS)),
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},fmtFull(Math.round(SUP_BUD_GS/12))),
+            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'10 payroll staff (ex-contractors)')
+          ),
+          h('tr',null,
+            h('td',{style:Object.assign({},S.td,{fontWeight:600})},'VET Teaching'),
+            h('td',{style:S.tdR},'$85,000'),
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'12%'),
+            h('td',{style:Object.assign({},S.tdR,{color:'#A78BFA'})},fmtFull(SUP_BUD_VET)),
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},fmtFull(Math.round(SUP_BUD_VET/12))),
+            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Lena only (casuals via Qstaff)')
+          ),
+          h('tr',null,
+            h('td',{style:Object.assign({},S.td,{fontWeight:600})},'ELICOS Teaching'),
+            h('td',{style:S.tdR},'$165,694'),
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'12%'),
+            h('td',{style:Object.assign({},S.tdR,{color:'#A78BFA'})},fmtFull(SUP_BUD_EL)),
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},fmtFull(Math.round(SUP_BUD_EL/12))),
+            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'~50% employees (6% effective blended)')
+          ),
+          h('tr',{style:{background:'#0F172A',fontWeight:700}},
+            h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+            h('td',{style:S.tdR},''),
+            h('td',{style:S.tdR},''),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#A78BFA'})},fmtFull(SUP_BYR)),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#64748B'})},fmtFull(SUP_BMO)),
+            h('td',{style:S.td},'')
+          )
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        'Super rate: 12% for employees. Contractors (Peter, Sophia, Cassie, Woojeung, Joseph, Kathryn) = 0%. ELICOS 6% effective = 50% employee mix.'),
+      /* Monthly Breakdown Table */
+      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Monthly Superannuation \u2014 BNE vs SYD (Xero Cash Basis)'),
+      h('table',{style:S.table},
+        h('thead',null,h('tr',null,
+          h('th',{style:S.th},'Month'),
+          h('th',{style:S.thR},'BNE SL03'),
+          h('th',{style:S.thR},'BNE QSL03'),
+          h('th',{style:S.thR},'SYD Super'),
+          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'Total Actual'),
+          h('th',{style:Object.assign({},S.thR,{color:'#A78BFA'})},'Budget'),
+          h('th',{style:S.thR},'Variance'),
+          h('th',{style:S.th},'Notes')
+        )),
+        h('tbody',null,
+          SUP_ACT.map(function(m,i){
+            if(m.bne===null)return h('tr',{key:i,style:{opacity:0.3}},
+              h('td',{style:S.td},m.mo),
+              h('td',{style:S.tdR},'\u2014'),h('td',{style:S.tdR},'\u2014'),h('td',{style:S.tdR},'\u2014'),
+              h('td',{style:S.tdR},'\u2014'),
+              h('td',{style:Object.assign({},S.tdR,{color:'#A78BFA'})},fmtFull(SUP_BMO)),
+              h('td',{style:S.tdR},'\u2014'),h('td',{style:S.td},'')
+            );
+            var total=m.bne+(m.qsl||0)+m.syd;
+            var mv=total-SUP_BMO;
+            var note=m.mo==='Feb'||m.mo==='Mar'?'SYD catch-up likely (Q4 2025)':'';
+            if(m.mo==='Mar')note='Partial month (8 days). '+note;
+            return h('tr',{key:i},
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},m.mo),
+              h('td',{style:S.tdR},fmtFull(m.bne)),
+              h('td',{style:S.tdR},m.qsl>0?fmtFull(m.qsl):'$0'),
+              h('td',{style:S.tdR},fmtFull(m.syd)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(total)),
+              h('td',{style:Object.assign({},S.tdR,{color:'#A78BFA'})},fmtFull(SUP_BMO)),
+              h('td',{style:Object.assign({},S.tdR,{color:mv>0?'#EF4444':'#10B981'})},(mv>0?'+':'')+fmtFull(mv)),
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},note)
+            );
+          }),
+          (function(){
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'YTD ('+nMoDone+'mo)'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(SUP_ACT.reduce(function(s,m){return s+(m.bne||0);},0))),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},'$0'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(SUP_ACT.reduce(function(s,m){return s+(m.syd||0);},0))),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#60A5FA'})},fmtFull(actYTD)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#A78BFA'})},fmtFull(budYTD)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:vr>0?'#EF4444':'#10B981'})},(vr>0?'+':'')+fmtFull(vr)),
+              h('td',{style:S.td},'')
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        'Source: Xero P&L Cash Basis. BNE = Shafston International (SL03 + QSL03). SYD = Shafston Sydney. SYD Feb/Mar elevated due to quarterly catch-up payments.'),
+      /* Monthly Trend Chart */
+      (function(){
+        return h('div',{style:{marginTop:20}},
+          h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Monthly Trend \u2014 Budget vs Actual'),
+          h(ResponsiveContainer,{width:'100%',height:250},
+            h(ComposedChart,{data:chartData,margin:{top:5,right:10,left:10,bottom:5}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
+              h(XAxis,{dataKey:'mo',tick:{fill:'#94A3B8',fontSize:11}}),
+              h(YAxis,{tick:{fill:'#94A3B8',fontSize:11},tickFormatter:function(v){return'$'+Math.round(v/1000)+'K';}}),
+              h(Tooltip,{contentStyle:{background:'#1E293B',border:'1px solid #334155',borderRadius:8},
+                formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget/mo':'Actual'];},
+                labelStyle:{color:'#94A3B8'}}),
+              h(Legend,{wrapperStyle:{fontSize:11,color:'#94A3B8'}}),
+              h(Bar,{dataKey:'budget',fill:'#A78BFA',radius:[4,4,0,0],name:'Budget',opacity:0.35}),
+              h(Bar,{dataKey:'actual',fill:'#3B82F6',radius:[4,4,0,0],name:'Actual'})
+            )
+          ),
+          h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+            'Budget: $'+SUP_BMO.toLocaleString()+'/mo (straight-line $'+Math.round(SUP_BYR/1000)+'K/yr). Actual is cash-basis \u2014 timing differences expected with quarterly STP lodgements.')
+        );
+      })()
+    )
+  );
+}
+
 /* ========== MAIN APP ========== */
-var TABS = ['YTD Overview','Fortnightly','Monthly','General Staff','ELICOS Teaching','VET Teaching'];
+var TABS = ['YTD Overview','Fortnightly','Monthly','General Staff','ELICOS Teaching','VET Teaching','Superannuation'];
 
 function App(){
   var state=useState(0);var activeTab=state[0];var setTab=state[1];
@@ -1169,6 +1359,7 @@ function App(){
     case 3:tabContent=h(GsTab);break;
     case 4:tabContent=h(ElicosTab);break;
     case 5:tabContent=h(VetTab);break;
+    case 6:tabContent=h(SuperTab);break;
     default:tabContent=h(YtdTab);
   }
 
