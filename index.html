@@ -115,32 +115,32 @@ var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contra
 
 /* General Staff Roster — 14 people */
 var GS_STAFF = [
-  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:8333,f:8333,t:'Contractor'},
-  {n:'Iris',r:'Admin Manager',l:'BNE',sal:95000,sup:11400,tot:106400,bmo:8867,j:8185,f:8185,t:'Payroll'},
-  {n:'Damon',r:'SYD Operations',l:'SYD',sal:88000,sup:10560,tot:98560,bmo:8213,j:7581,f:7581,t:'Payroll'},
-  {n:'Mia',r:'Service',l:'BNE',sal:75000,sup:9000,tot:84000,bmo:7000,j:6462,f:6462,t:'Payroll'},
-  {n:'Vincent',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,t:'Payroll'},
-  {n:'Yidan',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,t:'Payroll'},
-  {n:'Yilia',r:'Admin',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,t:'Payroll'},
-  {n:'Mika',r:'Sales',l:'BNE',sal:70000,sup:8400,tot:78400,bmo:6533,j:6031,f:6031,t:'Payroll'},
-  {n:'Tiya',r:'SYD Support',l:'SYD',sal:65000,sup:7800,tot:74800,bmo:6233,j:5187,f:5600,t:'Payroll'},
-  {n:'Esther',r:'Sales (PT)',l:'BNE',sal:64000,sup:7680,tot:71680,bmo:5973,j:2902,f:2902,t:'PT Hourly'},
-  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:0,f:4247,t:'Hourly'},
-  {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:1990,f:3660,t:'Contractor'},
-  {n:'Sophia',r:'Consultant',l:'BNE',sal:40000,sup:0,tot:40000,bmo:3333,j:1667,f:3546,t:'Contractor'},
-  {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:346,f:1529,t:'Contractor'}
+  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,m:13333,t:'Contractor'},
+  {n:'Iris',r:'Admin Manager',l:'BNE',sal:95000,sup:11400,tot:106400,bmo:8867,j:8185,f:8185,m:4092,t:'Payroll'},
+  {n:'Damon',r:'SYD Operations',l:'SYD',sal:88000,sup:10560,tot:98560,bmo:8213,j:7581,f:7581,m:3791,t:'Payroll'},
+  {n:'Mia',r:'Service',l:'BNE',sal:75000,sup:9000,tot:84000,bmo:7000,j:6462,f:6462,m:3231,t:'Payroll'},
+  {n:'Vincent',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:3166,t:'Payroll'},
+  {n:'Yidan',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:3166,t:'Payroll'},
+  {n:'Yilia',r:'Admin',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:3166,t:'Payroll'},
+  {n:'Mika',r:'Sales',l:'BNE',sal:70000,sup:8400,tot:78400,bmo:6533,j:6031,f:6031,m:3015,t:'Payroll'},
+  {n:'Tiya',r:'SYD Support',l:'SYD',sal:65000,sup:7800,tot:74800,bmo:6233,j:5187,f:5600,m:2800,t:'Payroll'},
+  {n:'Esther',r:'Sales (PT)',l:'BNE',sal:64000,sup:7680,tot:71680,bmo:5973,j:2902,f:2902,m:3446,t:'PT Hourly'},
+  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:4480,f:4247,m:2124,t:'Hourly'},
+  {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:1990,f:3660,m:1973,t:'Contractor'},
+  {n:'Sophia',r:'Consultant',l:'BNE',sal:40000,sup:0,tot:40000,bmo:3333,j:1667,f:3546,m:3546,t:'Contractor'},
+  {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:346,f:1529,m:231,t:'Contractor'}
 ];
 
 /* VET Teaching Staff — Lena (budget) + casual teachers from Xero Fn-VET calendar */
 var VET_STAFF = [
   {n:'Lena Lee Law',r:'ECEC Teacher',l:'BNE',sal:85000,sup:10200,tot:95200,bmo:7933,
-   grossFn:3269,supFn:392,totalFn:3662,j:7322,f:7322,nt:'Salaried. Budget = Lena only.'},
+   grossFn:3269,supFn:392,totalFn:3662,j:7322,f:7322,m:3662,nt:'Salaried. Budget = Lena only.'},
   {n:'Ram Prasad Acharya',r:'VET Casual',l:'BNE',sal:0,sup:0,tot:0,bmo:0,
-   grossFn:0,supFn:0,totalFn:0,j:3080,f:3528,nt:'Casual, variable hours. Non-budget.'},
+   grossFn:0,supFn:0,totalFn:0,j:3080,f:3528,m:2016,nt:'Casual, variable hours. Non-budget.'},
   {n:'Benjamin Seah',r:'VET Casual',l:'BNE',sal:0,sup:0,tot:0,bmo:0,
-   grossFn:0,supFn:0,totalFn:0,j:3360,f:1680,nt:'Departed after Fn3 (Feb 4).'},
+   grossFn:0,supFn:0,totalFn:0,j:3360,f:1680,m:0,nt:'Departed after Fn3 (Feb 4).'},
   {n:'Pelin Tatlidil',r:'VET Casual',l:'BNE',sal:0,sup:0,tot:0,bmo:0,
-   grossFn:0,supFn:0,totalFn:0,j:308,f:0,nt:'One-off Fn1 only.'}
+   grossFn:0,supFn:0,totalFn:0,j:308,f:0,m:0,nt:'One-off Fn1 only.'}
 ];
 
 /* ELICOS Teaching Staff — Jan/Feb data */
@@ -621,7 +621,8 @@ function StaffTab(){
               h('th',{style:S.thR},'Budget/fn'),
               h('th',{style:S.thR},'Jan'),
               h('th',{style:S.thR},'Feb'),
-              h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD'),
+              h('th',{style:S.thR},'Mar'),
+              h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD ('+nFnDone+'fn)'),
               h('th',{style:S.thR},'Var')
             )
           ),
@@ -632,13 +633,10 @@ function StaffTab(){
               /* Budget per fortnight */
               var bfG=Math.round(s.sal/26);var bfS=Math.round(s.sup/26);var bfN=Math.round(bfG*(1-tr));
               var budVal=payView==='gross'?bfG:payView==='net'?bfN:bfS;
-              /* Monthly budget for variance */
-              var bmG=Math.round(s.sal/12);var bmS=Math.round(s.sup/12);var bmN=Math.round(bmG*(1-tr));
-              var budMo=payView==='gross'?bmG:payView==='net'?bmN:bmS;
               /* Actuals */
-              var jSplit=splitPay(s.j,sr,tr);var fSplit=splitPay(s.f,sr,tr);
-              var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
-              var ytd=jVal+fVal;var budYtd=budMo*2;var v=ytd-budYtd;
+              var jSplit=splitPay(s.j,sr,tr);var fSplit=splitPay(s.f,sr,tr);var mSplit=splitPay(s.m||0,sr,tr);
+              var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);var mVal=getPayVal(mSplit,payView);
+              var ytd=jVal+fVal+mVal;var budYtd=budVal*nFnDone;var v=ytd-budYtd;
               /* Contractors: show "—" for net and super */
               var na=co&&(payView==='net'||payView==='super');
               return h('tr',{key:i},
@@ -654,30 +652,32 @@ function StaffTab(){
                 h('td',{style:Object.assign({},S.tdR,{color:viewColor})},na?'\u2014':fmtFull(budVal)),
                 h('td',{style:S.tdR},na?'\u2014':fmtFull(jVal)),
                 h('td',{style:S.tdR},na?'\u2014':fmtFull(fVal)),
+                h('td',{style:S.tdR},na?'\u2014':fmtFull(mVal)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},na?'\u2014':fmtFull(ytd)),
                 h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':v>0?'#EF4444':'#94A3B8'})},na?'\u2014':fmtFull(v))
               );
             }),
             /* GS Total */
             (function(){
-              var tBudMo=0,tJ=0,tF=0;
+              var tBudFn=0,tJ=0,tF=0,tM=0;
               GS_STAFF.forEach(function(s){
                 var sr=getSuperRate(s.t);var co=isCon(s.t);var tr=effTaxRate(s.sal);
                 /* Skip contractors for net/super totals */
                 if(co&&payView!=='gross')return;
-                var bmG=Math.round(s.sal/12);var bmS=Math.round(s.sup/12);var bmN=Math.round(bmG*(1-tr));
-                tBudMo+=payView==='gross'?bmG:payView==='net'?bmN:bmS;
-                var js=splitPay(s.j,sr,tr);var fs=splitPay(s.f,sr,tr);
-                tJ+=getPayVal(js,payView);tF+=getPayVal(fs,payView);
+                var bfG=Math.round(s.sal/26);var bfS=Math.round(s.sup/26);var bfN=Math.round(bfG*(1-tr));
+                tBudFn+=payView==='gross'?bfG:payView==='net'?bfN:bfS;
+                var js=splitPay(s.j,sr,tr);var fs=splitPay(s.f,sr,tr);var ms=splitPay(s.m||0,sr,tr);
+                tJ+=getPayVal(js,payView);tF+=getPayVal(fs,payView);tM+=getPayVal(ms,payView);
               });
-              var tYtd=tJ+tF;var tBytd=tBudMo*2;var tV=tYtd-tBytd;
+              var tYtd=tJ+tF+tM;var tBytd=tBudFn*nFnDone;var tV=tYtd-tBytd;
               return h('tr',{style:{background:'#0F172A',fontWeight:700}},
                 h('td',{style:S.td},''),
                 h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
                 h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:viewColor})},fmtFull(tBudMo)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:viewColor})},fmtFull(tBudFn)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tM)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tYtd)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tV<0?'#10B981':'#EF4444'})},fmtFull(tV))
               );
@@ -686,7 +686,7 @@ function StaffTab(){
         )
       ),
       h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
-        'Payroll: 12% super. Contractors: no PAYG/super (show \u2014). Net Pay = est. using 2025-26 ATO brackets + 2% Medicare. Totals exclude contractors in Net/Super view.')
+        'Payroll: 12% super. Contractors: no PAYG/super (show \u2014). Net Pay = est. using 2025-26 ATO brackets + 2% Medicare. Budget = per fn \u00d7 '+nFnDone+' fn. Totals exclude contractors in Net/Super view.')
     ),
 
     /* ELICOS Teaching — P&L Reconciliation */
@@ -896,38 +896,39 @@ function VetTab(){
         'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (Shafston International). Non-budget = casual teachers + agency fees.'),
       /* VET Teaching Staff — Lena only, GS format */
       h('div',{style:{marginTop:16,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'VET Teaching Staff'),
-      (function(){
-        var s=VET_STAFF[0];
-        var payFn=vetPV==='gross'?LENA_GR_FN:LENA_NET_FN;
-        var budFn=payFn;
-        var jVal=payFn*2;
-        var fVal=payFn*2;
-        var ytd=jVal+fVal;var vr=ytd-budFn*nFnDone;
-        return h('table',{style:S.table},
-          h('thead',null,
-            h('tr',null,
-              h('th',{style:S.th},'#'),h('th',{style:S.th},'Name'),h('th',{style:S.th},'Role'),
-              h('th',{style:S.th},'Loc'),h('th',{style:S.th},'Type'),h('th',{style:S.thR},'Budget/fn'),
-              h('th',{style:S.thR},'Jan'),h('th',{style:S.thR},'Feb'),
-              h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD'),h('th',{style:S.thR},'Var')
-            )
-          ),
-          h('tbody',null,
-            h('tr',null,
-              h('td',{style:S.td},'1'),
+      h('table',{style:S.table},
+        h('thead',null,
+          h('tr',null,
+            h('th',{style:S.th},'#'),h('th',{style:S.th},'Name'),h('th',{style:S.th},'Role'),
+            h('th',{style:S.th},'Loc'),h('th',{style:S.th},'Type'),h('th',{style:S.thR},'Budget/fn'),
+            h('th',{style:S.thR},'Jan'),h('th',{style:S.thR},'Feb'),h('th',{style:S.thR},'Mar'),
+            h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD ('+nFnDone+'fn)'),h('th',{style:S.thR},'Var')
+          )
+        ),
+        h('tbody',null,
+          VET_STAFF.map(function(s,i){
+            var isBud=s.sal>0;
+            var ratio=isBud?(vetPV==='gross'?s.grossFn/s.totalFn:LENA_NET_FN/s.totalFn):1;
+            var budFn=isBud?(vetPV==='gross'?s.grossFn:LENA_NET_FN):0;
+            var jVal=Math.round(s.j*ratio);var fVal=Math.round(s.f*ratio);var mVal=Math.round((s.m||0)*ratio);
+            var ytd=jVal+fVal+mVal;var budYtd=budFn*nFnDone;var vr=ytd-budYtd;
+            var tc=isBud?'#3B82F6':'#F59E0B';var tl=isBud?'Payroll':'Casual';
+            return h('tr',{key:i},
+              h('td',{style:S.td},i+1),
               h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
               h('td',{style:S.td},s.r),
               h('td',{style:S.td},s.l),
-              h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid #3B82F6',color:'#3B82F6'}},'Payroll')),
-              h('td',{style:Object.assign({},S.tdR,{color:'#10B981'})},fmtFull(budFn)),
-              h('td',{style:S.tdR},fmtFull(jVal)),
-              h('td',{style:S.tdR},fmtFull(fVal)),
+              h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid '+tc,color:tc}},tl)),
+              h('td',{style:Object.assign({},S.tdR,{color:'#10B981'})},isBud?fmtFull(budFn):'\u2014'),
+              h('td',{style:S.tdR},s.j>0?fmtFull(jVal):'\u2014'),
+              h('td',{style:S.tdR},s.f>0?fmtFull(fVal):'\u2014'),
+              h('td',{style:S.tdR},(s.m||0)>0?fmtFull(mVal):'\u2014'),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(ytd)),
-              h('td',{style:Object.assign({},S.tdR,{color:vr>0?'#EF4444':'#10B981'})},fmtFull(vr))
-            )
-          )
-        );
-      })(),
+              h('td',{style:Object.assign({},S.tdR,{color:vr>0?'#EF4444':vr<0?'#10B981':'#94A3B8'})},isBud?fmtFull(vr):fmtFull(ytd)+' (non-bud)')
+            );
+          })
+        )
+      ),
       /* Fortnightly Trend Chart — all 26 fn, Budget + Actual bars */
       (function(){
         var vetFnData=[];
@@ -1054,11 +1055,11 @@ function GsTab(){
             h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'\u2014'),
             h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Already in accounts above. Budget: WEI HE, Andy, Austin')
           ),
-          (function(){var tv=actYTD-budYTD;
+          (function(){var pnlBudYTD=0;GS_PNL.forEach(function(a){pnlBudYTD+=Math.round(a.byr/26*nFnDone);});pnlBudYTD+=fpYTD;var tv=actYTD-pnlBudYTD;
             return h('tr',{style:{background:'#0F172A',fontWeight:700}},
               h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL (inc. Final Pay)'),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(actYTD)),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(budYTD)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(pnlBudYTD)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tv>0?'#EF4444':'#10B981'})},(tv>0?'+':'')+fmtFull(tv)),
               h('td',{style:S.td},'')
             );
@@ -1067,7 +1068,7 @@ function GsTab(){
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
         'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026. Budget = sawtooth (Peter/Sophia monthly) + $'+(fpYTD/1000).toFixed(1)+'K departing staff. '+
-        'Remaining variance: HR24 miscodings (ELICOS ~$18K, SYD super ~$20K), Edward $7K + Emma $4K recodes pending.'),
+        'Remaining variance: HR24 miscodings (ELICOS teachers ~$20K, SYD super ~$8K = ~$28K), Edward $7K + Emma $4K recodes pending.'),
       /* General Staff Table */
       h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'General Staff ('+GS_STAFF.length+' people)'),
       h('table',{style:S.table},
@@ -1082,14 +1083,15 @@ function GsTab(){
           h('th',{style:S.thR},'Budget/fn'),
           h('th',{style:S.thR},'Jan'),
           h('th',{style:S.thR},'Feb'),
-          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD (4fn)'),
+          h('th',{style:S.thR},'Mar'),
+          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD ('+nFnDone+'fn)'),
           h('th',{style:S.thR},'Variance')
         )),
         h('tbody',null,
           GS_STAFF.map(function(s,i){
             var yr=pvYr(s);var bfn=Math.round(yr/26);
-            var jV=pvAmt(s,s.j);var fV=pvAmt(s,s.f);
-            var ytd=jV+fV;var bud4=Math.round(yr/26*4);var vr=ytd-bud4;
+            var jV=pvAmt(s,s.j);var fV=pvAmt(s,s.f);var mV=pvAmt(s,s.m||0);
+            var ytd=jV+fV+mV;var budYtd=Math.round(yr/26*nFnDone);var vr=ytd-budYtd;
             var tc=s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F59E0B':s.t==='PT Hourly'?'#8B5CF6':'#94A3B8';
             return h('tr',{key:i},
               h('td',{style:S.td},i+1),
@@ -1102,14 +1104,15 @@ function GsTab(){
               h('td',{style:Object.assign({},S.tdR,{color:'#06B6D4'})},fmtFull(bfn)),
               h('td',{style:S.tdR},fmtFull(jV)),
               h('td',{style:S.tdR},fmtFull(fV)),
+              h('td',{style:S.tdR},fmtFull(mV)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(ytd)),
               h('td',{style:Object.assign({},S.tdR,{fontSize:12,color:vr>0?'#EF4444':vr<0?'#10B981':'#94A3B8'})},(vr>0?'+':'')+fmtFull(vr))
             );
           }),
           (function(){
-            var tY=0,tJ=0,tF=0;
-            GS_STAFF.forEach(function(s){tY+=pvYr(s);tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);});
-            var tYTD=tJ+tF;var tBud=Math.round(tY/26*4);var tVr=tYTD-tBud;
+            var tY=0,tJ=0,tF=0,tM=0;
+            GS_STAFF.forEach(function(s){tY+=pvYr(s);tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);tM+=pvAmt(s,s.m||0);});
+            var tYTD=tJ+tF+tM;var tBud=Math.round(tY/26*nFnDone);var tVr=tYTD-tBud;
             return h('tr',{style:{background:'#0F172A',fontWeight:700}},
               h('td',{style:S.td},''),
               h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
@@ -1118,6 +1121,7 @@ function GsTab(){
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(Math.round(tY/26))),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tM)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#60A5FA'})},fmtFull(tYTD)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tVr>0?'#EF4444':'#10B981'})},(tVr>0?'+':'')+fmtFull(tVr))
             );
@@ -1126,7 +1130,7 @@ function GsTab(){
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
         gsPV==='net'?'\u26a0\ufe0f Net pay = estimated ~70% of gross for payroll staff. Accurate net requires Xero payslip data pull.':
-        'Jan/Feb = 2 fortnights each (4fn total). Mar 5 data not yet in staff table. Peter/Sophia paid monthly \u2014 creates high/low alternation.'),
+        nFnDone+' fortnights: Jan (2fn) + Feb (2fn) + Mar 5 (1fn). Peter/Sophia paid monthly \u2014 creates timing variance in per-fn budget comparison.'),
       /* Fortnightly Trend Chart — blue budget bars + red actual bars */
       (function(){
         var gsFnData=[];
@@ -1154,7 +1158,7 @@ function GsTab(){
             h('div',null,
               'Budget = sawtooth per fn (Peter $13.3K + Sophia $3.3K every other fn) + final pay overlay Fn1\u20138. Actual = P&L wages + final pay. Remaining variance from:'),
             h('ul',{style:{margin:'6px 0 0 16px',padding:0}},
-              h('li',null,'HR24 miscodings: ELICOS teachers (~$18K) and SYD super (~$20K) should be in Teaching Cost / Superannuation'),
+              h('li',null,'HR24 miscodings: ELICOS teachers (~$20K) and SYD super (~$8K) = ~$28K should be in Teaching Cost / Superannuation'),
               h('li',null,'Edward Shelton $7,320 journal recode pending (HR03 \u2192 ELICOS Teaching Cost)'),
               h('li',null,'Emma $3,725 commission incorrectly in HR03')
             )
