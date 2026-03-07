@@ -150,17 +150,17 @@ var VET_STAFF = [
    grossFn:0,supFn:0,totalFn:0,j:308,f:0,m:0,nt:'One-off Fn1 only.'}
 ];
 
-/* ELICOS Teaching Staff — Jan/Feb data */
+/* ELICOS Teaching Staff — Jan/Feb/Mar data (gross wages from Xero payroll) */
 var EL_STAFF = [
-  {n:'Eunice Calaguas',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,s:'Ongoing'},
-  {n:'Wesley Oliver',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,s:'Ongoing'},
-  {n:'Flora Capacci',r:'Teacher',l:'BNE',rate:62,j:2170,f:4495,s:'Ongoing'},
-  {n:'Julia Knieper',r:'Teacher',l:'BNE',rate:62,j:1860,f:4340,s:'Ongoing'},
-  {n:'Joseph Rinella',r:'Contractor',l:'BNE',rate:78,j:3582,f:7860,s:'Ongoing'},
-  {n:'Anna Skorobach',r:'Teacher (Casual)',l:'SYD',rate:62,j:4514,f:6782,s:'Ongoing'},
-  {n:'Mila Izyumskaya',r:'Contractor',l:'SYD',rate:67,j:2010,f:2345,s:'Ongoing'},
-  {n:'Elisha Sharma',r:'Teacher (Casual)',l:'SYD',rate:62,j:1736,f:4166,s:'Ongoing'},
-  {n:'Paul Besaans',r:'Teacher',l:'BNE',rate:67,j:2680,f:0,s:'Jan only'},
+  {n:'Eunice Calaguas',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,m:3900,s:'Ongoing'},
+  {n:'Wesley Oliver',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,m:3510,s:'Ongoing'},
+  {n:'Flora Capacci',r:'Teacher',l:'BNE',rate:62,j:2170,f:4495,m:2170,s:'Ongoing'},
+  {n:'Julia Knieper',r:'Teacher',l:'BNE',rate:62,j:1860,f:4340,m:930,s:'Ongoing'},
+  {n:'Joseph Rinella',r:'Contractor',l:'BNE',rate:78,j:3582,f:7860,m:0,s:'Ongoing'},
+  {n:'Anna Skorobach',r:'Teacher (Casual)',l:'SYD',rate:62,j:4514,f:6782,m:1760,s:'Ongoing'},
+  {n:'Mila Izyumskaya',r:'Contractor',l:'SYD',rate:67,j:2010,f:2345,m:0,s:'Ongoing'},
+  {n:'Elisha Sharma',r:'Teacher (Casual)',l:'SYD',rate:62,j:1736,f:4166,m:2695,s:'Ongoing'},
+  {n:'Paul Besaans',r:'Teacher',l:'BNE',rate:67,j:2680,f:0,m:0,s:'Jan only'},
   {n:'Olena Dmytriieva',r:'Teacher',l:'BNE',rate:62,j:1488,f:0,s:'Jan only'},
   {n:'Kathryn McMillan',r:'Contractor',l:'BNE',rate:0,j:561,f:0,s:'Jan only'}
 ];
@@ -1060,33 +1060,38 @@ function ElicosTab(){
           h('th',{style:S.th},'Code'),
           h('th',{style:S.th},'Account'),
           h('th',{style:S.thR},'YTD Actual'),
+          h('th',{style:S.thR},'YTD Budget'),
+          h('th',{style:S.thR},'Variance'),
           h('th',{style:S.th},'Notes')
         )),
         h('tbody',null,
           (function(){
             var rows=[];var lastCat='';
-            var cats={};EL_PNL.forEach(function(a){if(!cats[a.cat])cats[a.cat]=0;cats[a.cat]+=a.ytd;});
             EL_PNL.forEach(function(a,i){
               if(a.cat!==lastCat){
                 rows.push(h('tr',{key:'cat-'+i,style:{background:'rgba(245,158,11,0.05)'}},
-                  h('td',{colSpan:4,style:Object.assign({},S.td,{fontWeight:700,fontSize:12,color:'#F59E0B',padding:'8px 12px'})},a.cat)
+                  h('td',{colSpan:6,style:Object.assign({},S.td,{fontWeight:700,fontSize:12,color:'#F59E0B',padding:'8px 12px'})},a.cat)
                 ));
                 lastCat=a.cat;
               }
-              rows.push(h('tr',{key:i,style:a.ytd===0?{opacity:0.4}:{}},
+              rows.push(h('tr',{key:i},
                 h('td',{style:Object.assign({},S.td,{fontSize:11,color:'#64748B'})},a.code),
                 h('td',{style:S.td},a.name),
-                h('td',{style:S.tdR},a.ytd>0?fmtFull(a.ytd):'\u2014'),
+                h('td',{style:S.tdR},fmtFull(a.ytd)),
+                h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'\u2014'),
+                h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'\u2014'),
                 h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
               ));
             });
-            /* Total row */
+            /* Total row with budget & variance */
             var tv=elActYTD-elBudYTD;
             rows.push(h('tr',{key:'total',style:{background:'#0F172A',fontWeight:700}},
               h('td',{style:S.td},''),
               h('td',{style:Object.assign({},S.td,{fontWeight:700})},'Total ELICOS Teaching Cost'),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(elActYTD)),
-              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget YTD: '+fmtFull(elBudYTD)+' | Var: '+((tv>0?'+':'')+fmtFull(tv)))
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(elBudYTD)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tv>0?'#EF4444':'#10B981'})},(tv>0?'+':'')+fmtFull(tv)),
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget by program, not by account')
             ));
             return rows;
           })()
