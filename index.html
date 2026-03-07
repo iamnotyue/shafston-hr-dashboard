@@ -802,7 +802,7 @@ function StaffTab(){
     h('div',{style:S.section},
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
         h('span',null,'VET Teaching \u2014 Budget vs Actual'),
-        h('span',{style:{fontSize:13,fontWeight:500,color:'#10B981'}},'Budget: '+fmtFull(VET_BYR)+'/yr = $85K wages + $10.2K super')
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#10B981'}},'Budget: $85,000/yr gross wages (Lena only)')
       ),
       /* Pay View filter */
       h('div',{style:Object.assign({},S.filterBar,{marginBottom:16})},
@@ -812,26 +812,24 @@ function StaffTab(){
         }),
         h('span',{style:{fontSize:11,color:'#64748B',marginLeft:12}},'Showing: '+(vetPV==='gross'?'Before tax':'Est. after PAYG tax'))
       ),
-      /* 3 KPI cards */
+      /* 3 KPI cards — all on gross/P&L basis, no super */
       (function(){
-        var vBytd=VET_BFN*nFnDone;
-        var vAytd=0;for(var i=0;i<nFnDone;i++)vAytd+=VET_ACT[i];
-        var vVar=vAytd-vBytd;var vVarPct=vBytd>0?(vVar/vBytd*100):0;
-        /* For net view: budget is Lena only, effective tax ~21% on $85k */
+        var vBytd=LENA_GR_FN*nFnDone;
+        var vAytd=VET_PNL_TOTAL;
         var vetTaxRate=calcTax(85000)/85000;
-        var dispBudget=vetPV==='gross'?vBytd:Math.round(vBytd/(1.12)*(1-vetTaxRate));
-        var dispActual=vetPV==='gross'?vAytd:Math.round(vAytd/(1.12)*(1-vetTaxRate));
+        var dispBudget=vetPV==='gross'?vBytd:Math.round(vBytd*(1-vetTaxRate));
+        var dispActual=vetPV==='gross'?vAytd:Math.round(vAytd*(1-vetTaxRate));
         var dispVar=dispActual-dispBudget;var dispVarPct=dispBudget>0?(dispVar/dispBudget*100):0;
         return h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
           h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
             h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
             h('div',{style:{fontSize:20,fontWeight:700,color:'#10B981'}},fmtFull(dispBudget)),
-            h('div',{style:{fontSize:10,color:'#64748B'}},'$'+VET_BFN.toLocaleString()+'/fn total cost')
+            h('div',{style:{fontSize:10,color:'#64748B'}},'$'+LENA_GR_FN.toLocaleString()+'/fn gross wages')
           ),
           h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
-            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Actual YTD ('+nFnDone+' fn)'),
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
             h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(dispActual)),
-            h('div',{style:{fontSize:10,color:'#64748B'}},'Payroll: budget + casuals')
+            h('div',{style:{fontSize:10,color:'#64748B'}},'Xero P&L cash basis (ex-super)')
           ),
           h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(dispVar>0?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)')}},
             h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
@@ -865,7 +863,7 @@ function StaffTab(){
             );
           }),
           h('tr',{style:{background:'#0F172A',fontWeight:700}},
-            h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL (wages ex-super)'),
+            h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
             h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(VET_PNL_TOTAL)),
             h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#10B981'})},fmtFull(LENA_GR_FN*nFnDone)),
             h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#EF4444'})},fmtFull(VET_PNL_TOTAL-LENA_GR_FN*nFnDone)),
@@ -874,16 +872,15 @@ function StaffTab(){
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (Shafston International). Super under general Superannuation account, not in VET P&L. Non-budget = casual teachers + agency fees.'),
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (Shafston International). Non-budget = casual teachers + agency fees.'),
       /* VET Teaching Staff — Lena only, GS format */
       h('div',{style:{marginTop:16,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'VET Teaching Staff'),
       (function(){
         var s=VET_STAFF[0];
         var vetTR=calcTax(s.sal)/s.sal;
-        var jG=Math.round(s.j/1.12);var fG=Math.round(s.f/1.12);
-        var jN=Math.round(jG*(1-vetTR));var fN=Math.round(fG*(1-vetTR));
-        var jVal=vetPV==='gross'?jG:jN;var fVal=vetPV==='gross'?fG:fN;
-        var budFn=vetPV==='gross'?Math.round(s.sal/26):Math.round(Math.round(s.sal/26)*(1-vetTR));
+        var budFn=vetPV==='gross'?LENA_GR_FN:Math.round(LENA_GR_FN*(1-vetTR));
+        var jVal=vetPV==='gross'?s.grossFn*2:Math.round(s.grossFn*2*(1-vetTR));
+        var fVal=vetPV==='gross'?s.grossFn*2:Math.round(s.grossFn*2*(1-vetTR));
         var ytd=jVal+fVal;var vr=ytd-budFn*nFnDone;
         return h('table',{style:S.table},
           h('thead',null,
@@ -915,8 +912,8 @@ function StaffTab(){
         var vetTR=calcTax(85000)/85000;
         var vetFnData=[];
         for(var i=0;i<26;i++){
-          var bud=VET_BFN;var act=i<=CURRENT_FN?VET_ACT[i]:null;
-          if(vetPV==='net'){bud=Math.round(bud/1.12*(1-vetTR));act=act!=null?Math.round(act/1.12*(1-vetTR)):null;}
+          var bud=LENA_GR_FN;var act=i<=CURRENT_FN?VET_ACT[i]:null;
+          if(vetPV==='net'){bud=Math.round(bud*(1-vetTR));act=act!=null?Math.round(act*(1-vetTR)):null;}
           vetFnData.push({fn:'Fn'+(i+1),budget:bud,actual:act});
         }
         return h('div',{style:{marginTop:16}},
@@ -939,7 +936,7 @@ function StaffTab(){
             )
           ),
           h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-            vetPV==='net'?'Net pay est. using 2025-26 ATO brackets + 2% Medicare levy. Super (12%) stripped before tax calc.':'Budget = $'+VET_BFN.toLocaleString()+'/fn (total cost inc. 12% super). Red bars = over budget. Grey = budget baseline.')
+            vetPV==='net'?'Net pay est. using 2025-26 ATO brackets + 2% Medicare levy.':'Budget = $'+LENA_GR_FN.toLocaleString()+'/fn gross wages (Lena). Red bars = over budget. Blue = budget baseline.')
         );
       })()
     )
