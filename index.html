@@ -1202,22 +1202,27 @@ function SuperTab(){
         h('span',null,'Superannuation Payable Tracker'),
         h('span',{style:{fontSize:13,fontWeight:500,color:'#A78BFA'}},'Budget: $'+Math.round(SUP_BYR/1000)+'K/yr | Acct 826')
       ),
-      /* 3 KPI cards */
-      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
-        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid rgba(239,68,68,0.3)'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2025 Overdue'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#EF4444'}},fmtFull(outOverdue)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+Math.round(grossOut/1000)+'K orig \u2212 $'+Math.round(paidYTD/1000)+'K paid')
+      /* 4 KPI cards: Budget YTD → Actual YTD → Variance → Outstanding */
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#A78BFA'}},fmtFull(budYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+SUP_BMO.toLocaleString()+'/mo \u00D7 '+nMoDone)
         ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2026 New Super ('+nMoDone+'mo)'),
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Actual YTD'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(newYTD)),
           h('div',{style:{fontSize:10,color:'#64748B'}},'Payroll accruals Jan\u2013'+(nMoDone>0?SUP_ACT[nMoDone-1].mo:''))
         ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(newYTD>budYTD?'rgba(239,68,68,0.3)':'rgba(16,185,129,0.3)')}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:newYTD>budYTD?'#EF4444':'#10B981'}},(newYTD>budYTD?'+':'')+fmtFull(newYTD-budYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},(newYTD>budYTD?'Over':'Under')+' budget')
+        ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid rgba(251,191,36,0.3)'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Total Payable'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#FBBF24'}},fmtFull(curPayable)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'Overdue + new accruals (BS liability)')
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2025 Outstanding'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#FBBF24'}},fmtFull(outOverdue)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+Math.round(grossOut/1000)+'K orig \u2212 $'+Math.round(paidYTD/1000)+'K paid')
         )
       ),
       /* Budget Breakdown by Category */
