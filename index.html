@@ -90,7 +90,8 @@ var GS_STAFF = [
 
 /* VET Teaching Staff — Lena only */
 var VET_STAFF = [
-  {n:'Lena Lee Law',r:'ECEC Teacher',l:'BNE',sal:85000,sup:10200,tot:95200,bmo:7933}
+  {n:'Lena Lee Law',r:'ECEC Teacher',l:'BNE',sal:85000,sup:10200,tot:95200,bmo:7933,
+   grossFn:3269,supFn:392,totalFn:3662,j:7324,f:7324}
 ];
 
 /* ELICOS Teaching Staff — Jan/Feb data */
@@ -513,8 +514,34 @@ function MonthTab(){
 }
 
 /* ========== TAB 4: STAFF DETAIL ========== */
+/* Pay View filter: controls what $ values are shown across all tables */
+var PAY_VIEWS=[{key:'total',label:'Total Cost'},{key:'gross',label:'Gross Pay'},{key:'super',label:'Super'}];
+
+/* Helper: split a total-cost amount into gross/super based on type */
+function splitPay(amount,superRate){
+  if(!amount||amount===0)return{gross:0,sup:0,total:0};
+  if(superRate===0)return{gross:amount,sup:0,total:amount};
+  var gross=Math.round(amount/((1+superRate)));var sup=amount-gross;
+  return{gross:gross,sup:sup,total:amount};
+}
+function getPayVal(split,view){return view==='gross'?split.gross:view==='super'?split.sup:split.total;}
+function getSuperRate(type){return type==='Contractor'?0:0.12;}
+
 function StaffTab(){
+  var pvState=useState('total');var payView=pvState[0];var setPayView=pvState[1];
+  var viewLabel=payView==='gross'?'Gross Pay':payView==='super'?'Super Only':'Total Cost (Gross+Super)';
+  var viewColor=payView==='gross'?'#60A5FA':payView==='super'?'#F59E0B':'#E2E8F0';
+
   return h('div',null,
+    /* Pay View Filter */
+    h('div',{style:Object.assign({},S.filterBar,{marginBottom:24})},
+      h('span',{style:S.filterLabel},'Pay View:'),
+      PAY_VIEWS.map(function(v){
+        return h('button',{key:v.key,style:payView===v.key?S.chipActive:S.chip,onClick:function(){setPayView(v.key);}},v.label);
+      }),
+      h('span',{style:{fontSize:11,color:'#64748B',marginLeft:12}},'Showing: '+viewLabel)
+    ),
+
     /* General Staff Section */
     h('div',{style:S.section},
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
@@ -530,21 +557,26 @@ function StaffTab(){
               h('th',{style:S.th},'Role'),
               h('th',{style:S.th},'Loc'),
               h('th',{style:S.th},'Type'),
-              h('th',{style:S.thR},'Salary'),
-              h('th',{style:S.thR},'Super'),
-              h('th',{style:S.thR},'Budget/yr'),
-              h('th',{style:S.thR},'Budget/mo'),
+              h('th',{style:S.thR},'Budget/fn'),
               h('th',{style:S.thR},'Jan'),
               h('th',{style:S.thR},'Feb'),
-              h('th',{style:S.thR},'YTD'),
-              h('th',{style:S.thR},'Var (YTD)')
+              h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD'),
+              h('th',{style:S.thR},'Var')
             )
           ),
           h('tbody',null,
             GS_STAFF.map(function(s,i){
-              var ytd=s.j+s.f;
-              var budgetYtd=s.bmo*2;
-              var v=ytd-budgetYtd;
+              var sr=getSuperRate(s.t);
+              var budFn=splitPay(Math.round(s.tot/26),sr===0?0:s.sup/s.tot);
+              /* For budget: gross=sal/26, super=sup/26, total=tot/26 */
+              var bfGross=Math.round(s.sal/26);var bfSup=Math.round(s.sup/26);var bfTotal=bfGross+bfSup;
+              var budVal=payView==='gross'?bfGross:payView==='super'?bfSup:bfTotal;
+              /* Actuals: j and f are total cost. Split by super rate */
+              var jSplit=splitPay(s.j,sr);var fSplit=splitPay(s.f,sr);
+              var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
+              var ytd=jVal+fVal;
+              var budYtd=budVal*2;
+              var v=ytd-budYtd;
               return h('tr',{key:i},
                 h('td',{style:S.td},i+1),
                 h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
@@ -555,33 +587,29 @@ function StaffTab(){
                   color:s.t==='Payroll'?'#60A5FA':s.t==='Contractor'?'#F97316':'#A78BFA',
                   border:'1px solid '+(s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F97316':'#8B5CF6')
                 })},s.t)),
-                h('td',{style:S.tdR},fmtFull(s.sal)),
-                h('td',{style:S.tdR},fmtFull(s.sup)),
-                h('td',{style:S.tdR},fmtFull(s.tot)),
-                h('td',{style:S.tdR},fmtFull(s.bmo)),
-                h('td',{style:S.tdR},fmtFull(s.j)),
-                h('td',{style:S.tdR},fmtFull(s.f)),
-                h('td',{style:S.tdR},fmtFull(ytd)),
-                h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':v>0?'#EF4444':'#94A3B8'})},fmtFull(v))
+                h('td',{style:Object.assign({},S.tdR,{color:viewColor})},budVal>0?fmtFull(budVal):(payView==='super'?'\u2014':fmtFull(0))),
+                h('td',{style:S.tdR},jVal>0?fmtFull(jVal):(payView==='super'&&sr===0?'\u2014':fmtFull(jVal))),
+                h('td',{style:S.tdR},fVal>0?fmtFull(fVal):(payView==='super'&&sr===0?'\u2014':fmtFull(fVal))),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},ytd>0?fmtFull(ytd):(payView==='super'&&sr===0?'\u2014':fmtFull(0))),
+                h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':v>0?'#EF4444':'#94A3B8'})},payView==='super'&&sr===0?'\u2014':fmtFull(v))
               );
             }),
             /* GS Total */
             (function(){
-              var tSal=GS_STAFF.reduce(function(s,x){return s+x.sal;},0);
-              var tSup=GS_STAFF.reduce(function(s,x){return s+x.sup;},0);
-              var tTot=GS_STAFF.reduce(function(s,x){return s+x.tot;},0);
-              var tBmo=GS_STAFF.reduce(function(s,x){return s+x.bmo;},0);
-              var tJ=GS_STAFF.reduce(function(s,x){return s+x.j;},0);
-              var tF=GS_STAFF.reduce(function(s,x){return s+x.f;},0);
-              var tYtd=tJ+tF;var tBytd=tBmo*2;var tV=tYtd-tBytd;
+              var tBud=0,tJ=0,tF=0;
+              GS_STAFF.forEach(function(s){
+                var sr=getSuperRate(s.t);
+                var bG=Math.round(s.sal/26);var bS=Math.round(s.sup/26);
+                tBud+=payView==='gross'?bG:payView==='super'?bS:(bG+bS);
+                var js=splitPay(s.j,sr);var fs=splitPay(s.f,sr);
+                tJ+=getPayVal(js,payView);tF+=getPayVal(fs,payView);
+              });
+              var tYtd=tJ+tF;var tBytd=tBud*2;var tV=tYtd-tBytd;
               return h('tr',{style:{background:'#0F172A',fontWeight:700}},
                 h('td',{style:S.td},''),
                 h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
                 h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tSal)),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tSup)),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tTot)),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tBmo)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:viewColor})},fmtFull(tBud)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
                 h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tYtd)),
@@ -592,63 +620,71 @@ function StaffTab(){
         )
       ),
       h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
-        'Notes: Esther is PT hourly ($40.49/hr). Miranda is hourly ($24.95/hr). Peter salary via CKW Investment Group. Woojeung also teaches ELICOS part-time (counted separately).')
+        'Payroll staff: 12% super. Contractors: no super. Esther PT ($40.49/hr). Miranda hourly ($24.95/hr). Peter via CKW Investment Group.')
     ),
 
     /* ELICOS Teaching Staff */
     h('div',{style:S.section},
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
         h('span',null,'ELICOS Teaching Staff'),
-        h('span',{style:{fontSize:13,fontWeight:500,color:'#F59E0B'}},'Budget: '+fmtFull(EL_BYR)+'/yr')
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#F59E0B'}},'Budget: '+fmtFull(EL_BYR)+'/yr | 6% effective super')
       ),
-      h('table',{style:S.table},
-        h('thead',null,
-          h('tr',null,
-            h('th',{style:S.th},'Name'),
-            h('th',{style:S.th},'Role'),
-            h('th',{style:S.th},'Campus'),
-            h('th',{style:S.thR},'Rate/hr'),
-            h('th',{style:S.thR},'Jan'),
-            h('th',{style:S.thR},'Feb'),
-            h('th',{style:S.thR},'YTD'),
-            h('th',{style:S.th},'Status')
+      h('div',{style:{overflowX:'auto'}},
+        h('table',{style:S.table},
+          h('thead',null,
+            h('tr',null,
+              h('th',{style:S.th},'Name'),
+              h('th',{style:S.th},'Role'),
+              h('th',{style:S.th},'Campus'),
+              h('th',{style:S.thR},'Rate/hr'),
+              h('th',{style:S.thR},'Jan'),
+              h('th',{style:S.thR},'Feb'),
+              h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD'),
+              h('th',{style:S.th},'Status')
+            )
+          ),
+          h('tbody',null,
+            EL_STAFF.map(function(s,i){
+              var isCon=s.r.indexOf('Contractor')>=0;var sr=isCon?0:0.12;
+              var jSplit=splitPay(s.j,sr);var fSplit=splitPay(s.f,sr);
+              var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
+              var ytd=jVal+fVal;
+              return h('tr',{key:i,style:s.s==='Jan only'?{opacity:0.6}:{}},
+                h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
+                h('td',{style:S.td},s.r),
+                h('td',{style:S.td},s.l),
+                h('td',{style:S.tdR},s.rate>0?'$'+s.rate:'\u2014'),
+                h('td',{style:S.tdR},jVal>0?fmtFull(jVal):(payView==='super'&&sr===0?'\u2014':'\u2014')),
+                h('td',{style:S.tdR},fVal>0?fmtFull(fVal):'\u2014'),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},ytd>0?fmtFull(ytd):(payView==='super'&&sr===0?'\u2014':fmtFull(0))),
+                h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
+                  background:s.s==='Ongoing'?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)',
+                  color:s.s==='Ongoing'?'#10B981':'#EF4444',
+                  border:'1px solid '+(s.s==='Ongoing'?'#10B981':'#EF4444')
+                })},s.s))
+              );
+            }),
+            /* ELICOS Total */
+            (function(){
+              var tJ=0,tF=0;
+              EL_STAFF.forEach(function(s){
+                var isCon=s.r.indexOf('Contractor')>=0;var sr=isCon?0:0.12;
+                tJ+=getPayVal(splitPay(s.j,sr),payView);tF+=getPayVal(splitPay(s.f,sr),payView);
+              });
+              return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+                h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+                h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ+tF)),
+                h('td',{style:S.td},'')
+              );
+            })()
           )
-        ),
-        h('tbody',null,
-          EL_STAFF.map(function(s,i){
-            var ytd=s.j+s.f;
-            return h('tr',{key:i,style:s.s==='Jan only'?{opacity:0.6}:{}},
-              h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
-              h('td',{style:S.td},s.r),
-              h('td',{style:S.td},s.l),
-              h('td',{style:S.tdR},s.rate>0?'$'+s.rate:h('span',{style:{color:'#64748B',fontStyle:'italic'}},'Invoice')),
-              h('td',{style:S.tdR},fmtFull(s.j)),
-              h('td',{style:S.tdR},s.f>0?fmtFull(s.f):'\u2014'),
-              h('td',{style:S.tdR},fmtFull(ytd)),
-              h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
-                background:s.s==='Ongoing'?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)',
-                color:s.s==='Ongoing'?'#10B981':'#EF4444',
-                border:'1px solid '+(s.s==='Ongoing'?'#10B981':'#EF4444')
-              })},s.s))
-            );
-          }),
-          /* ELICOS Total */
-          (function(){
-            var tJ=EL_STAFF.reduce(function(s,x){return s+x.j;},0);
-            var tF=EL_STAFF.reduce(function(s,x){return s+x.f;},0);
-            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
-              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL (Wages)'),
-              h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ+tF)),
-              h('td',{style:S.td},'')
-            );
-          })()
         )
       ),
       h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
-        'ELICOS budget: 25hr/wk classes until Apr 6, then 20hr/wk. GC campus stops Apr 6. Super at 6% effective rate (50% employee/50% contractor model). Xero ELICOS total (Jan-Mar 6): $71,384.')
+        'Payroll teachers: 12% super. Contractors: no super (invoice-based). Effective blended rate \u2248 6%. Xero ELICOS total (Jan\u2013Mar 6): $71,384.')
     ),
 
     /* VET Teaching Staff */
@@ -663,28 +699,36 @@ function StaffTab(){
             h('th',{style:S.th},'Name'),
             h('th',{style:S.th},'Role'),
             h('th',{style:S.th},'Campus'),
-            h('th',{style:S.thR},'Salary'),
-            h('th',{style:S.thR},'Super'),
-            h('th',{style:S.thR},'Total/yr'),
-            h('th',{style:S.thR},'Budget/mo'),
+            h('th',{style:S.thR},'Budget/fn'),
+            h('th',{style:S.thR},'Jan'),
+            h('th',{style:S.thR},'Feb'),
+            h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD'),
+            h('th',{style:S.thR},'Var'),
             h('th',{style:S.th},'Notes')
           )
         ),
         h('tbody',null,
           VET_STAFF.map(function(s,i){
+            var budFn=payView==='gross'?s.grossFn:payView==='super'?s.supFn:s.totalFn;
+            var jSplit=splitPay(s.j,0.12);var fSplit=splitPay(s.f,0.12);
+            var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
+            var ytd=jVal+fVal;var budYtd=budFn*2;var v=ytd-budYtd;
             return h('tr',{key:i},
               h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
               h('td',{style:S.td},s.r),
               h('td',{style:S.td},s.l),
-              h('td',{style:S.tdR},fmtFull(s.sal)),
-              h('td',{style:S.tdR},fmtFull(s.sup)),
-              h('td',{style:S.tdR},fmtFull(s.tot)),
-              h('td',{style:S.tdR},fmtFull(s.bmo)),
+              h('td',{style:Object.assign({},S.tdR,{color:viewColor})},fmtFull(budFn)),
+              h('td',{style:S.tdR},fmtFull(jVal)),
+              h('td',{style:S.tdR},fmtFull(fVal)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},fmtFull(ytd)),
+              h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':v>0?'#EF4444':'#94A3B8'})},fmtFull(v)),
               h('td',{style:S.td},'Only VET teacher on Shafston payroll. Ben & Ram moved to Jo\u2019s team.')
             );
           })
         )
-      )
+      ),
+      h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
+        'Lena: Fn-Admin payroll calendar. Gross/fn=$3,269, Super/fn=$392, Total/fn=$3,662. Salaried \u2014 actuals assumed at budget rate.')
     )
   );
 }
