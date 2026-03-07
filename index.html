@@ -1013,7 +1013,7 @@ function ElicosTab(){
           h('th',{style:S.thR},'20hr Wks'),
           h('th',{style:S.thR},'Total Wks'),
           h('th',{style:S.thR},'Gross Hrs'),
-          h('th',{style:S.thR},'Public Holiday Deduct'),
+          h('th',{style:Object.assign({},S.thR,{textAlign:'center'})},'Public Holiday Deduct'),
           h('th',{style:S.thR},'Net Hrs'),
           h('th',{style:S.thR},'\u00d7$70')
         )),
@@ -1026,7 +1026,7 @@ function ElicosTab(){
               h('td',{style:S.tdR},s.w20||'\u2014'),
               h('td',{style:S.tdR},s.twk),
               h('td',{style:S.tdR},s.gh.toLocaleString()),
-              h('td',{style:S.tdR},s.ph),
+              h('td',{style:Object.assign({},S.tdR,{textAlign:'center'})},s.ph),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},s.nh.toLocaleString()),
               h('td',{style:Object.assign({},S.tdR,{color:'#F59E0B',fontWeight:600})},'$'+s.cost.toLocaleString())
             );
@@ -1039,7 +1039,7 @@ function ElicosTab(){
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tCls),
               h('td',{style:S.tdR},''),h('td',{style:S.tdR},''),h('td',{style:S.tdR},''),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tGh.toLocaleString()),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tPh),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,textAlign:'center'})},tPh),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tNh.toLocaleString()),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#F59E0B'})},'$'+tCost.toLocaleString())
             );
