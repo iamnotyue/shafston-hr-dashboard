@@ -94,7 +94,7 @@ var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
 /* Source: Xero P&L screenshot from Peter */
 var GS_PNL = [
   {code:'HR03',name:'Wages & Salaries - Operation',ytd:141137,byr:573801,note:'8 BNE payroll staff + departing'},
-  {code:'HR24',name:'Sydney HR',ytd:74444,byr:153000,note:'Damon+Tiya + ELICOS/super (mixed)'},
+  {code:'HR24',name:'Sydney HR',ytd:74444,byr:153000,note:'Damon+Tiya net. \u26a0 Inc. Anna/Elisha ELICOS wages + SYD super (misallocated)'},
   {code:'HR23',name:'Study Tour Representing',ytd:8759,byr:40000,note:'Sophia contractor'},
   {code:'5-4251',name:'Consulting & Professional Fees',ytd:36245,byr:220298,note:'Peter+Woojeong+Cassie (HR only)'}
 ];
@@ -1049,10 +1049,10 @@ function GsTab(){
           }),
           h('tr',{style:{background:'rgba(245,158,11,0.05)'}},
             h('td',{style:S.td},h('span',{style:{color:'#F59E0B',fontSize:11,marginRight:6}},'\u2192'),' Final Pay (departing staff)'),
-            h('td',{style:S.tdR},fmtFull(fpYTD)),
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B',fontStyle:'italic'})},'\u2014'),
             h('td',{style:Object.assign({},S.tdR,{color:'#06B6D4'})},fmtFull(fpYTD)),
-            h('td',{style:Object.assign({},S.tdR,{color:'#94A3B8'})},'$0'),
-            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'WEI HE, Andy Chen, Austin Huang')
+            h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'\u2014'),
+            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Already in accounts above. Budget: WEI HE, Andy, Austin')
           ),
           (function(){var tv=actYTD-budYTD;
             return h('tr',{style:{background:'#0F172A',fontWeight:700}},
@@ -1139,7 +1139,7 @@ function GsTab(){
             h(BarChart,{data:gsFnData,margin:{top:5,right:10,left:10,bottom:5}},
               h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
               h(XAxis,{dataKey:'fn',tick:{fill:'#94A3B8',fontSize:10},interval:1}),
-              h(YAxis,{tick:{fill:'#94A3B8',fontSize:11},tickFormatter:function(v){return'$'+Math.round(v/1000)+'K';},domain:['dataMin-5000','dataMax+5000']}),
+              h(YAxis,{tick:{fill:'#94A3B8',fontSize:11},tickFormatter:function(v){return'$'+Math.round(v/1000)+'K';},domain:[0,'dataMax+5000']}),
               h(Tooltip,{contentStyle:tipStyle,
                 formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget/fn':'Actual/fn'];},
                 labelStyle:{color:'#94A3B8'}}),
