@@ -83,6 +83,17 @@ var LENA_GR_FN = 3269; /* Lena gross wages per fn (salaried) */
 var LENA_NET_FN = 2575; /* Actual net pay per fn from Xero payslip ($2,575.23) */
 var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
 
+/* General Staff P&L — HR-General Staff section, Cash Basis Jan 1 – Mar 7 2026 */
+/* Source: Xero P&L screenshot from Peter */
+var GS_PNL = [
+  {code:'HR03',name:'Wages & Salaries - Operation',ytd:141137,byr:573801,note:'8 BNE payroll staff + departing'},
+  {code:'HR24',name:'Sydney HR',ytd:74444,byr:153000,note:'Damon+Tiya + ELICOS/super (mixed)'},
+  {code:'HR23',name:'Study Tour Representing',ytd:8759,byr:40000,note:'Sophia contractor'},
+  {code:'5-4251',name:'Consulting & Professional Fees',ytd:36245,byr:220298,note:'Peter+Woojeong+Cassie (HR only)'}
+];
+var GS_PNL_TOTAL = 260585;
+var GS_WAGES_BYR = 987099; /* Annual wages budget (ex-super), all 14 people */
+
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
 var EL_PNL = [
@@ -945,8 +956,195 @@ function VetTab(){
   );
 }
 
+/* ========== TAB 6: GENERAL STAFF (HR-General Staff P&L) ========== */
+function GsTab(){
+  var pvS=useState('gross');var gsPV=pvS[0];var setGsPV=pvS[1];
+  var wBFN=Math.round(GS_WAGES_BYR/26);
+  var budYTD=wBFN*nFnDone;
+  var actYTD=GS_PNL_TOTAL;
+  var vrAmt=actYTD-budYTD;var vrPct=budYTD>0?(vrAmt/budYTD*100):0;
+
+  /* Map staff to P&L account */
+  function acctOf(s){
+    if(s.n==='Sophia')return'HR23';
+    if(s.t==='Contractor')return'5-4251';
+    if(s.l==='SYD')return'HR24';
+    return'HR03';
+  }
+  /* Pay-view: convert total-cost j/f to gross or net */
+  function pvAmt(s,val){
+    if(gsPV==='total')return val;
+    if(gsPV==='gross')return s.sup===0?val:Math.round(val*s.sal/s.tot);
+    return s.sup===0?val:Math.round(val*s.sal/s.tot*0.7);
+  }
+  function pvYr(s){return gsPV==='total'?s.tot:gsPV==='gross'?s.sal:s.sup===0?s.sal:Math.round(s.sal*0.7);}
+
+  return h('div',null,
+    h('div',{style:S.section},
+      /* Title */
+      h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
+        h('span',null,'General Staff \u2014 HR Expenses (ex-Super)'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#06B6D4'}},'Budget: $'+Math.round(GS_WAGES_BYR/1000)+'K/yr wages \u00b7 14 people')
+      ),
+      /* Pay View filter */
+      h('div',{style:Object.assign({},S.filterBar,{marginBottom:12})},
+        h('span',{style:S.filterLabel},'Pay View:'),
+        [{key:'gross',label:'Gross Pay'},{key:'net',label:'Net Pay'},{key:'total',label:'Total Cost'}].map(function(v){
+          return h('button',{key:v.key,style:gsPV===v.key?S.chipActive:S.chip,onClick:function(){setGsPV(v.key);}},v.label);
+        }),
+        h('span',{style:{fontSize:11,color:'#64748B',marginLeft:12}},
+          gsPV==='gross'?'Gross wages (P&L basis, ex-super)':
+          gsPV==='net'?'Net pay estimate (~70% of gross for payroll, pending Xero payslip data)':
+          'Total employer cost (wages + 12% super for payroll staff)')
+      ),
+      /* 3 KPI cards */
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#06B6D4'}},fmtFull(budYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+wBFN.toLocaleString()+'/fn \u00d7 '+nFnDone+' fn (wages only)')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(actYTD)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},'Xero Cash Basis \u00b7 includes non-budget items')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(vrAmt>0?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)')}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:vrAmt>0?'#EF4444':'#10B981'}},fmtFull(vrAmt)),
+          h('div',{style:{fontSize:10,color:vrAmt>0?'#EF4444':'#10B981'}},fmtPct(vrPct)+' over \u2014 driven by departing staff & HR24 miscodings')
+        )
+      ),
+      /* P&L Account Breakdown */
+      h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'P&L Account Breakdown (Xero Cash Basis)'),
+      h('table',{style:S.table},
+        h('thead',null,h('tr',null,
+          h('th',{style:S.th},'P&L Account'),
+          h('th',{style:S.thR},'YTD Actual'),
+          h('th',{style:S.thR},'YTD Budget'),
+          h('th',{style:S.thR},'Variance'),
+          h('th',{style:S.th},'Notes')
+        )),
+        h('tbody',null,
+          GS_PNL.map(function(a,i){
+            var bYTD=Math.round(a.byr/26*nFnDone);
+            var v=a.ytd-bYTD;
+            return h('tr',{key:i},
+              h('td',{style:S.td},h('span',{style:{color:'#64748B',fontSize:11,marginRight:6}},a.code),' ',a.name),
+              h('td',{style:S.tdR},fmtFull(a.ytd)),
+              h('td',{style:Object.assign({},S.tdR,{color:'#06B6D4'})},fmtFull(bYTD)),
+              h('td',{style:Object.assign({},S.tdR,{color:v>0?'#EF4444':'#10B981'})},(v>0?'+':'')+fmtFull(v)),
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
+            );
+          }),
+          (function(){var tB=Math.round(GS_WAGES_BYR/26*nFnDone);var tv=GS_PNL_TOTAL-tB;
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL HR-General Staff'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(GS_PNL_TOTAL)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(tB)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tv>0?'#EF4444':'#10B981'})},(tv>0?'+':'')+fmtFull(tv)),
+              h('td',{style:S.td},'')
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026. Budget = annual salary/26 \u00d7 '+nFnDone+'fn. '+
+        'Variance includes: departing staff (Andy/Austin ~$36K), HR24 miscodings (ELICOS teachers ~$18K, SYD super ~$20K), Edward $7K recode pending.'),
+      /* General Staff Table */
+      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'General Staff ('+GS_STAFF.length+' people)'),
+      h('table',{style:S.table},
+        h('thead',null,h('tr',null,
+          h('th',{style:S.th},'#'),
+          h('th',{style:S.th},'Name'),
+          h('th',{style:S.th},'Role'),
+          h('th',{style:S.th},'Loc'),
+          h('th',{style:S.th},'Type'),
+          h('th',{style:S.th},'Acct'),
+          h('th',{style:S.thR},gsPV==='total'?'Total/yr':'Salary/yr'),
+          h('th',{style:S.thR},'Budget/fn'),
+          h('th',{style:S.thR},'Jan'),
+          h('th',{style:S.thR},'Feb'),
+          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD (4fn)')
+        )),
+        h('tbody',null,
+          GS_STAFF.map(function(s,i){
+            var yr=pvYr(s);var bfn=Math.round(yr/26);
+            var jV=pvAmt(s,s.j);var fV=pvAmt(s,s.f);
+            var ytd=jV+fV;
+            var tc=s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F59E0B':s.t==='PT Hourly'?'#8B5CF6':'#94A3B8';
+            return h('tr',{key:i},
+              h('td',{style:S.td},i+1),
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
+              h('td',{style:S.td},s.r),
+              h('td',{style:S.td},s.l),
+              h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid '+tc,color:tc}},s.t)),
+              h('td',{style:Object.assign({},S.td,{fontSize:11,color:'#64748B'})},acctOf(s)),
+              h('td',{style:S.tdR},fmtFull(yr)),
+              h('td',{style:Object.assign({},S.tdR,{color:'#06B6D4'})},fmtFull(bfn)),
+              h('td',{style:S.tdR},fmtFull(jV)),
+              h('td',{style:S.tdR},fmtFull(fV)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(ytd))
+            );
+          }),
+          (function(){
+            var tY=0,tJ=0,tF=0;
+            GS_STAFF.forEach(function(s){tY+=pvYr(s);tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);});
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:S.td},''),
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+              h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tY)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(Math.round(tY/26))),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#60A5FA'})},fmtFull(tJ+tF))
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        gsPV==='net'?'\u26a0\ufe0f Net pay = estimated ~70% of gross for payroll staff. Accurate net requires Xero payslip data pull.':
+        'Jan/Feb = 2 fortnights each (4fn total). Mar 5 data not yet in staff table. Peter/Sophia paid monthly \u2014 creates high/low alternation.'),
+      /* Fortnightly Trend Chart — bar (actual) + line (budget) */
+      (function(){
+        var gsFnData=[];
+        for(var i=0;i<26;i++){
+          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BFN,actual:i<=CURRENT_FN?GS_ACT[i]:null});
+        }
+        return h('div',{style:{marginTop:20}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},
+            h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0'}},'Fortnightly Trend \u2014 Total Employer Cost (Full Year)'),
+            h('div',{style:{fontSize:11,color:'#64748B'}},'Budget includes super for comparability with payroll actuals')
+          ),
+          h(ResponsiveContainer,{width:'100%',height:280},
+            h(ComposedChart,{data:gsFnData,margin:{top:5,right:10,left:10,bottom:5}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
+              h(XAxis,{dataKey:'fn',tick:{fill:'#94A3B8',fontSize:10},interval:1}),
+              h(YAxis,{tick:{fill:'#94A3B8',fontSize:11},tickFormatter:function(v){return'$'+Math.round(v/1000)+'K';},domain:['dataMin-5000','dataMax+5000']}),
+              h(Tooltip,{contentStyle:tipStyle,
+                formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget/fn (inc super)':'Actual (inc super)'];},
+                labelStyle:{color:'#94A3B8'}}),
+              h(Bar,{dataKey:'actual',fill:'#06B6D4',radius:[4,4,0,0],barSize:28,name:'Actual'},
+                gsFnData.map(function(d,i){
+                  var over=d.actual!=null&&d.actual>d.budget;
+                  return h(Cell,{key:i,fill:d.actual==null?'transparent':over?'#EF4444':'#06B6D4'});
+                })
+              ),
+              h(Line,{type:'monotone',dataKey:'budget',stroke:'#F59E0B',strokeWidth:2,strokeDasharray:'6 3',dot:false,name:'Budget',connectNulls:true})
+            )
+          ),
+          h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+            'Yellow dashed line = $'+GS_BFN.toLocaleString()+'/fn budget (wages+super). Bars = actual from Xero payroll + contractor invoices. '+
+            'Red = over budget. Note: Peter/Sophia monthly pay causes \u00b1$18K sawtooth between fortnights \u2014 this is normal.')
+        );
+      })()
+    )
+  );
+}
+
 /* ========== MAIN APP ========== */
-var TABS = ['YTD Overview','Fortnightly','Monthly','Staff Detail','VET Teaching'];
+var TABS = ['YTD Overview','Fortnightly','Monthly','Staff Detail','VET Teaching','General Staff'];
 
 function App(){
   var state=useState(0);var activeTab=state[0];var setTab=state[1];
@@ -962,6 +1160,7 @@ function App(){
     case 2:tabContent=h(MonthTab);break;
     case 3:tabContent=h(StaffTab);break;
     case 4:tabContent=h(VetTab);break;
+    case 5:tabContent=h(GsTab);break;
     default:tabContent=h(YtdTab);
   }
 
