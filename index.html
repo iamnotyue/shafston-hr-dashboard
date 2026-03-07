@@ -1139,7 +1139,7 @@ function GsTab(){
       (function(){
         var gsFnData=[];
         for(var i=0;i<26;i++){
-          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BUD[i]+(GS_FP[i]||0),actual:i<=CURRENT_FN?(GS_ACT[i]+(GS_FP[i]||0)):(GS_FP[i]?GS_FP[i]:null)});
+          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BUD[i]+(GS_FP[i]||0),actual:i<=CURRENT_FN?GS_ACT[i]:null});
         }
         return h('div',{style:{marginTop:20}},
           h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual (inc. Departing Staff)'),
