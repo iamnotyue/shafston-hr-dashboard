@@ -56,6 +56,10 @@ var GS_BYR = 1076315;
 /* Departing staff final pay per fn (WEI HE, Andy Chen, Austin Huang) */
 /* Fn1-5 from Xero verified totals, Fn6-8 Austin AP remaining. ~$48.8K total */
 var GS_FP = [7400,4350,4350,13800,8300,3535,3535,3535,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+/* Per-fn budget with Peter/Sophia monthly sawtooth ($16.7K paid every other fn) */
+/* High fn = base $30,273 + Peter $13,333 + Sophia $3,333 = $46,939. Low fn = $30,273 */
+/* High fns: 1st fn of each month (0,2,4,6,9,11,13,15,17,19,22,24) */
+var GS_BUD = [46939,30273,46939,30273,46939,30273,46939,30273,30273,46939,30273,46939,30273,46939,30273,46939,30273,46939,30273,46939,30273,30273,46939,30273,46939,30273];
 /* ELICOS: $351,263/yr = $331,380 wages + $19,883 super (6% effective) */
 /* Variable per fn: 25hr/wk until Apr 6, then 20hr; GC stops Apr 6 */
 var EL_BFN = [22260,20034,22260,22260,22260,22557,14840,14840,13950,14840,11872,11872,11575,11872,11872,11872,10982,11872,11872,10982,8904,8904,8904,8904,8904,0];
@@ -962,9 +966,8 @@ function VetTab(){
 /* ========== TAB 6: GENERAL STAFF (HR-General Staff P&L) ========== */
 function GsTab(){
   var pvS=useState('gross');var gsPV=pvS[0];var setGsPV=pvS[1];
-  var wBFN=Math.round(GS_WAGES_BYR/26);
-  var fpYTD=0;for(var fi=0;fi<nFnDone;fi++)fpYTD+=(GS_FP[fi]||0);
-  var budYTD=wBFN*nFnDone+fpYTD;
+  var budYTD=0;var fpYTD=0;
+  for(var fi=0;fi<nFnDone;fi++){budYTD+=GS_BUD[fi]+(GS_FP[fi]||0);fpYTD+=(GS_FP[fi]||0);}
   var actYTD=GS_PNL_TOTAL;
   var vrAmt=actYTD-budYTD;var vrPct=budYTD>0?(vrAmt/budYTD*100):0;
 
@@ -999,12 +1002,12 @@ function GsTab(){
           gsPV==='gross'?'Gross wages (P&L basis, ex-super)':
           'Net pay estimate (~70% of gross for payroll, pending Xero payslip data)')
       ),
-      /* 3 KPI cards */
-      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
+      /* 4 KPI cards */
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#06B6D4'}},fmtFull(budYTD)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+wBFN.toLocaleString()+'/fn x '+nFnDone+'fn + $'+(fpYTD/1000).toFixed(1)+'K departing staff')
+          h('div',{style:{fontSize:10,color:'#64748B'}},'Sawtooth budget + $'+(fpYTD/1000).toFixed(1)+'K departing staff')
         ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
@@ -1015,6 +1018,11 @@ function GsTab(){
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
           h('div',{style:{fontSize:20,fontWeight:700,color:vrAmt>0?'#EF4444':'#10B981'}},fmtFull(vrAmt)),
           h('div',{style:{fontSize:10,color:vrAmt>0?'#EF4444':'#10B981'}},fmtPct(vrPct)+' over \u2014 HR24 miscodings + pending recodes')
+        ),
+        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2026 Budget Used'),
+          h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtPct(actYTD/GS_WAGES_BYR*100)),
+          h('div',{style:{fontSize:10,color:'#64748B'}},fmtFull(actYTD)+' / $'+Math.round(GS_WAGES_BYR/1000)+'K annual budget')
         )
       ),
       /* P&L Account Breakdown */
@@ -1039,11 +1047,18 @@ function GsTab(){
               h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
             );
           }),
-          (function(){var tB=Math.round(GS_WAGES_BYR/26*nFnDone);var tv=GS_PNL_TOTAL-tB;
+          h('tr',{style:{background:'rgba(245,158,11,0.05)'}},
+            h('td',{style:S.td},h('span',{style:{color:'#F59E0B',fontSize:11,marginRight:6}},'\u2192'),' Final Pay (departing staff)'),
+            h('td',{style:S.tdR},fmtFull(fpYTD)),
+            h('td',{style:Object.assign({},S.tdR,{color:'#06B6D4'})},fmtFull(fpYTD)),
+            h('td',{style:Object.assign({},S.tdR,{color:'#94A3B8'})},'$0'),
+            h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'WEI HE, Andy Chen, Austin Huang')
+          ),
+          (function(){var tv=actYTD-budYTD;
             return h('tr',{style:{background:'#0F172A',fontWeight:700}},
-              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL HR-General Staff'),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(GS_PNL_TOTAL)),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(tB)),
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL (inc. Final Pay)'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(actYTD)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(budYTD)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tv>0?'#EF4444':'#10B981'})},(tv>0?'+':'')+fmtFull(tv)),
               h('td',{style:S.td},'')
             );
@@ -1051,7 +1066,7 @@ function GsTab(){
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026. Budget = salary/26 \u00d7 '+nFnDone+'fn + $'+(fpYTD/1000).toFixed(1)+'K departing staff. '+
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026. Budget = sawtooth (Peter/Sophia monthly) + $'+(fpYTD/1000).toFixed(1)+'K departing staff. '+
         'Remaining variance: HR24 miscodings (ELICOS ~$18K, SYD super ~$20K), Edward $7K + Emma $4K recodes pending.'),
       /* General Staff Table */
       h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'General Staff ('+GS_STAFF.length+' people)'),
@@ -1067,13 +1082,14 @@ function GsTab(){
           h('th',{style:S.thR},'Budget/fn'),
           h('th',{style:S.thR},'Jan'),
           h('th',{style:S.thR},'Feb'),
-          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD (4fn)')
+          h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD (4fn)'),
+          h('th',{style:S.thR},'Variance')
         )),
         h('tbody',null,
           GS_STAFF.map(function(s,i){
             var yr=pvYr(s);var bfn=Math.round(yr/26);
             var jV=pvAmt(s,s.j);var fV=pvAmt(s,s.f);
-            var ytd=jV+fV;
+            var ytd=jV+fV;var bud4=Math.round(yr/26*4);var vr=ytd-bud4;
             var tc=s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F59E0B':s.t==='PT Hourly'?'#8B5CF6':'#94A3B8';
             return h('tr',{key:i},
               h('td',{style:S.td},i+1),
@@ -1086,12 +1102,14 @@ function GsTab(){
               h('td',{style:Object.assign({},S.tdR,{color:'#06B6D4'})},fmtFull(bfn)),
               h('td',{style:S.tdR},fmtFull(jV)),
               h('td',{style:S.tdR},fmtFull(fV)),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(ytd))
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(ytd)),
+              h('td',{style:Object.assign({},S.tdR,{fontSize:12,color:vr>0?'#EF4444':vr<0?'#10B981':'#94A3B8'})},(vr>0?'+':'')+fmtFull(vr))
             );
           }),
           (function(){
             var tY=0,tJ=0,tF=0;
             GS_STAFF.forEach(function(s){tY+=pvYr(s);tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);});
+            var tYTD=tJ+tF;var tBud=Math.round(tY/26*4);var tVr=tYTD-tBud;
             return h('tr',{style:{background:'#0F172A',fontWeight:700}},
               h('td',{style:S.td},''),
               h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
@@ -1100,7 +1118,8 @@ function GsTab(){
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(Math.round(tY/26))),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#60A5FA'})},fmtFull(tJ+tF))
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#60A5FA'})},fmtFull(tYTD)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tVr>0?'#EF4444':'#10B981'})},(tVr>0?'+':'')+fmtFull(tVr))
             );
           })()
         )
@@ -1112,7 +1131,7 @@ function GsTab(){
       (function(){
         var gsFnData=[];
         for(var i=0;i<26;i++){
-          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BFN+(GS_FP[i]||0),actual:i<=CURRENT_FN?GS_ACT[i]:null});
+          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BUD[i]+(GS_FP[i]||0),actual:i<=CURRENT_FN?(GS_ACT[i]+(GS_FP[i]||0)):null});
         }
         return h('div',{style:{marginTop:20}},
           h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual (inc. Departing Staff)'),
@@ -1126,23 +1145,18 @@ function GsTab(){
                 labelStyle:{color:'#94A3B8'}}),
               h(Legend,{wrapperStyle:{fontSize:11,color:'#94A3B8'}}),
               h(Bar,{dataKey:'budget',fill:'#3B82F6',radius:[4,4,0,0],name:'Budget',opacity:0.6}),
-              h(Bar,{dataKey:'actual',fill:'#EF4444',radius:[4,4,0,0],name:'Actual'},
-                gsFnData.map(function(d,i){
-                  return h(Cell,{key:i,fill:d.actual==null?'transparent':'#EF4444'});
-                })
-              )
+              h(Bar,{dataKey:'actual',fill:'#EF4444',radius:[4,4,0,0],name:'Actual'})
             )
           ),
           /* Variance explanation note */
           h('div',{style:{marginTop:12,padding:'12px 16px',background:'#1E293B',borderRadius:8,border:'1px solid #334155',fontSize:12,color:'#CBD5E1',lineHeight:'1.6'}},
             h('div',{style:{fontWeight:600,color:'#F8FAFC',marginBottom:6}},'Budget & Variance Notes'),
             h('div',null,
-              'Budget = $'+GS_BFN.toLocaleString()+'/fn (14 people) + departing staff final pay overlay (Fn1\u20138). Remaining variance from:'),
+              'Budget = sawtooth per fn (Peter $13.3K + Sophia $3.3K every other fn) + final pay overlay Fn1\u20138. Actual = P&L wages + final pay. Remaining variance from:'),
             h('ul',{style:{margin:'6px 0 0 16px',padding:0}},
               h('li',null,'HR24 miscodings: ELICOS teachers (~$18K) and SYD super (~$20K) should be in Teaching Cost / Superannuation'),
               h('li',null,'Edward Shelton $7,320 journal recode pending (HR03 \u2192 ELICOS Teaching Cost)'),
-              h('li',null,'Emma $3,725 commission incorrectly in HR03'),
-              h('li',null,'Peter/Sophia monthly pay creates \u00b1$18K sawtooth pattern between fortnights \u2014 this is normal')
+              h('li',null,'Emma $3,725 commission incorrectly in HR03')
             )
           )
         );
