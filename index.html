@@ -619,7 +619,7 @@ function StaffTab(){
               h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
               h('td',{style:S.td},s.r),
               h('td',{style:S.td},s.l),
-              h('td',{style:S.tdR},s.rate>0?'$'+s.rate:'\u2014'),
+              h('td',{style:S.tdR},s.rate>0?'$'+s.rate:h('span',{style:{color:'#64748B',fontStyle:'italic'}},'Invoice')),
               h('td',{style:S.tdR},fmtFull(s.j)),
               h('td',{style:S.tdR},s.f>0?fmtFull(s.f):'\u2014'),
               h('td',{style:S.tdR},fmtFull(ytd)),
