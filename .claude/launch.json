@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hr-dashboard",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/Caleb W/OneDrive - shafston.edu/Shafston Work Platform/00.2026 Operation/03.Claude Working Space/shafston-hr-dashboard/serve.js"],
+      "port": 8091
+    }
+  ]
+}
