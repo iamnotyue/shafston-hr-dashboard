@@ -81,6 +81,18 @@ var VET_PNL = [
 var VET_PNL_TOTAL = 31610; /* Total VET P&L wages (ex-super) */
 var LENA_GR_FN = 3269; /* Lena gross wages per fn (salaried) */
 
+/* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
+/* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
+var EL_PNL = [
+  {src:'BNE',name:'Adult ELICOS Wages',ytd:13619,note:'HSP BNE + PEP BNE teachers'},
+  {src:'BNE',name:'U18 ELICOS Wages',ytd:57765,note:'4 classes (HSP/PEP/GC/Mango)'},
+  {src:'BNE',name:'Ready Teacher (ELICOS)',ytd:714,note:'Agency fee'},
+  {src:'SYD',name:'Adult ELICOS Wages',ytd:1550,note:'HSP SYD (1 class)'},
+  {src:'SYD',name:'U18 ELICOS Wages',ytd:22760,note:'PEP SYD (1 class)'}
+];
+var EL_PNL_TOTAL = 96408; /* Total ELICOS P&L wages (ex-super), BNE+SYD */
+var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contractor × 0% */
+
 /* General Staff Roster — 14 people */
 var GS_STAFF = [
   {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,t:'Contractor'},
@@ -657,12 +669,78 @@ function StaffTab(){
         'Payroll: 12% super. Contractors: no PAYG/super (show \u2014). Net Pay = est. using 2025-26 ATO brackets + 2% Medicare. Totals exclude contractors in Net/Super view.')
     ),
 
-    /* ELICOS Teaching Staff */
+    /* ELICOS Teaching — P&L Reconciliation */
     h('div',{style:S.section},
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
-        h('span',null,'ELICOS Teaching Staff'),
-        h('span',{style:{fontSize:13,fontWeight:500,color:'#F59E0B'}},'Budget: '+fmtFull(EL_BYR)+'/yr | 6% effective super')
+        h('span',null,'ELICOS Teaching \u2014 Budget vs P&L'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#F59E0B'}},'Budget: '+fmtFull(EL_BYR)+'/yr = $331K wages + $20K super (6%)')
       ),
+      /* KPI cards */
+      (function(){
+        var elBudYtd=0;for(var i=0;i<nFnDone;i++)elBudYtd+=EL_BFN[i];
+        var elActYtd=0;for(var i=0;i<nFnDone;i++)elActYtd+=EL_ACT[i];
+        var elVar=elActYtd-elBudYtd;var elVarPct=(elVar/elBudYtd*100);
+        return h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
+          h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
+            h('div',{style:{fontSize:20,fontWeight:700,color:'#F59E0B'}},fmtFull(elBudYtd)),
+            h('div',{style:{fontSize:10,color:'#64748B'}},'Wages + 6% super (variable/fn)')
+          ),
+          h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Payroll Actual ('+nFnDone+' fn)'),
+            h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(elActYtd)),
+            h('div',{style:{fontSize:10,color:'#64748B'}},'Xero BNE+SYD payroll + contractors')
+          ),
+          h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Wages (ex-super)'),
+            h('div',{style:{fontSize:20,fontWeight:700,color:'#60A5FA'}},fmtFull(EL_PNL_TOTAL)),
+            h('div',{style:{fontSize:10,color:'#64748B'}},'BNE '+fmtFull(72098)+' + SYD '+fmtFull(24310))
+          ),
+          h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(elVar<0?'rgba(16,185,129,0.2)':'rgba(239,68,68,0.2)')}},
+            h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget Variance'),
+            h('div',{style:{fontSize:20,fontWeight:700,color:elVar<0?'#10B981':'#EF4444'}},fmtFull(elVar)),
+            h('div',{style:{fontSize:10,color:elVar<0?'#10B981':'#EF4444'}},fmtPct(elVarPct)+' '+(elVar<0?'under budget':'over budget'))
+          )
+        );
+      })(),
+      /* P&L Account Breakdown Table */
+      h('table',{style:S.table},
+        h('thead',null,
+          h('tr',null,
+            h('th',{style:S.th},'Tenant'),
+            h('th',{style:S.th},'P&L Account'),
+            h('th',{style:S.thR},'YTD Actual'),
+            h('th',{style:S.th},'Notes')
+          )
+        ),
+        h('tbody',null,
+          EL_PNL.map(function(a,i){
+            return h('tr',{key:i,style:a.ytd===0?{opacity:0.5}:{}},
+              h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
+                background:a.src==='BNE'?'rgba(59,130,246,0.15)':'rgba(249,115,22,0.15)',
+                color:a.src==='BNE'?'#60A5FA':'#F97316',
+                border:'1px solid '+(a.src==='BNE'?'#3B82F6':'#F97316')
+              })},a.src)),
+              h('td',{style:S.td},a.name),
+              h('td',{style:S.tdR},a.ytd>0?fmtFull(a.ytd):'\u2014'),
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
+            );
+          }),
+          h('tr',{style:{background:'#0F172A',fontWeight:700}},
+            h('td',{style:Object.assign({},S.td,{fontWeight:700})},''),
+            h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL (wages ex-super)'),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(EL_PNL_TOTAL)),
+            h('td',{style:S.td},'')
+          )
+        )
+      ),
+      h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026. BNE = Shafston International, SYD = Shafston Sydney. Super under general Superannuation account (~6% blended: 50% employee @ 12% + 50% contractor @ 0%). Budget is variable per fn (25hr/wk Q1, 20hr/wk from Apr 6).')
+    ),
+
+    /* ELICOS Staff Detail */
+    h('div',{style:Object.assign({},S.section,{marginTop:8})},
+      h('div',{style:S.sectionTitle},'ELICOS Payroll Staff Detail'),
       h('div',{style:{overflowX:'auto'}},
         h('table',{style:S.table},
           h('thead',null,
@@ -679,21 +757,19 @@ function StaffTab(){
           ),
           h('tbody',null,
             EL_STAFF.map(function(s,i){
-              var co=s.r.indexOf('Contractor')>=0;var sr=co?0:0.12;
-              /* Estimate annual income for tax: rate × 25hrs × 46 weeks */
-              var estAnnual=s.rate>0?s.rate*1150:0;var tr=co?0:effTaxRate(estAnnual);
-              var jSplit=splitPay(s.j,sr,tr);var fSplit=splitPay(s.f,sr,tr);
-              var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
-              var ytd=jVal+fVal;
-              var na=co&&(payView==='net'||payView==='super');
+              var ytd=s.j+s.f;
               return h('tr',{key:i,style:s.s==='Jan only'?{opacity:0.6}:{}},
                 h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
-                h('td',{style:S.td},s.r),
+                h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
+                  background:s.r.indexOf('Contractor')>=0?'rgba(249,115,22,0.15)':'rgba(59,130,246,0.15)',
+                  color:s.r.indexOf('Contractor')>=0?'#F97316':'#60A5FA',
+                  border:'1px solid '+(s.r.indexOf('Contractor')>=0?'#F97316':'#3B82F6')
+                })},s.r)),
                 h('td',{style:S.td},s.l),
                 h('td',{style:S.tdR},s.rate>0?'$'+s.rate:'\u2014'),
-                h('td',{style:S.tdR},na?'\u2014':(jVal>0?fmtFull(jVal):'\u2014')),
-                h('td',{style:S.tdR},na?'\u2014':(fVal>0?fmtFull(fVal):'\u2014')),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},na?'\u2014':(ytd>0?fmtFull(ytd):fmtFull(0))),
+                h('td',{style:S.tdR},s.j>0?fmtFull(s.j):'\u2014'),
+                h('td',{style:S.tdR},s.f>0?fmtFull(s.f):'\u2014'),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},ytd>0?fmtFull(ytd):'\u2014'),
                 h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
                   background:s.s==='Ongoing'?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)',
                   color:s.s==='Ongoing'?'#10B981':'#EF4444',
@@ -701,15 +777,10 @@ function StaffTab(){
                 })},s.s))
               );
             }),
-            /* ELICOS Total */
+            /* ELICOS Staff Total */
             (function(){
               var tJ=0,tF=0;
-              EL_STAFF.forEach(function(s){
-                var co=s.r.indexOf('Contractor')>=0;var sr=co?0:0.12;
-                if(co&&payView!=='gross')return;
-                var estA=s.rate>0?s.rate*1150:0;var tr=co?0:effTaxRate(estA);
-                tJ+=getPayVal(splitPay(s.j,sr,tr),payView);tF+=getPayVal(splitPay(s.f,sr,tr),payView);
-              });
+              EL_STAFF.forEach(function(s){tJ+=s.j;tF+=s.f;});
               return h('tr',{style:{background:'#0F172A',fontWeight:700}},
                 h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
                 h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
@@ -723,7 +794,7 @@ function StaffTab(){
         )
       ),
       h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
-        'Payroll teachers: 12% super. Contractors: no super (invoice-based). Effective blended rate \u2248 6%. Xero ELICOS total (Jan\u2013Mar 6): $71,384.')
+        'Gross pay (invoice total for contractors). 50/50 model: employees get 12% super, contractors invoice-based (no super). Fn1 low due to Christmas shutdown (~2.25 wks).')
     ),
 
     /* VET Teaching — P&L Reconciliation */
