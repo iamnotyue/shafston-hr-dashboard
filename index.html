@@ -69,9 +69,9 @@ var VET_BFN = 3662;
 var VET_BYR = 95200;
 var TOTAL_BYR = GS_BYR + EL_BYR + VET_BYR; /* $1,522,778 */
 
-/* --- Actuals: total cost per fortnight (5 fortnights completed) --- */
-/* GS: from Xero payroll (gross+super) + contractor invoices */
-var GS_ACT = [37960,29721,44636,32437,32748];
+/* --- Actuals: P&L wages per fn (cash basis, from HR03+HR24+HR23+5-4251 journals) --- */
+/* GS: Xero transactions mapped to fortnights. Total = GS_PNL_TOTAL ($260,585) */
+var GS_ACT = [43646,48666,46223,73500,48550];
 /* ELICOS: Xero BNE+SYD ELICOS payroll + contractor invoices. Fn1 low = Christmas shutdown */
 var EL_ACT = [12715,28989,21298,22832,21864];
 /* VET: Xero Fn-VET payroll (Lena + casual teachers). Budget = Lena only */
@@ -208,10 +208,6 @@ var ytdBudget=ytdGB+ytdEB+ytdVB;
 var ytdActual=ytdGA+ytdEA+ytdVA;
 var ytdVar=ytdActual-ytdBudget;
 var ytdVarPct=ytdBudget>0?(ytdVar/ytdBudget*100):0;
-
-/* Monthly contractor budget: completed months × bmo + partial month fns × bfn */
-var _cmpMo=0,_partFn=0;
-(function(){var lastMo=FN_MONTH[CURRENT_FN];for(var mi=0;mi<=lastMo;mi++){var lastFi=-1;for(var fi=0;fi<26;fi++){if(FN_MONTH[fi]===mi)lastFi=fi;}if(lastFi<=CURRENT_FN)_cmpMo++;else{for(var fi=0;fi<26;fi++){if(FN_MONTH[fi]===mi&&fi<=CURRENT_FN)_partFn++;}}}})();
 
 /* Forecast */
 var nFnDone=CURRENT_FN+1;
@@ -971,8 +967,8 @@ function VetTab(){
 /* ========== TAB 6: GENERAL STAFF (HR-General Staff P&L) ========== */
 function GsTab(){
   var pvS=useState('gross');var gsPV=pvS[0];var setGsPV=pvS[1];
-  var budYTD=0;var fpYTD=0;
-  for(var fi=0;fi<nFnDone;fi++){budYTD+=GS_BUD[fi]+(GS_FP[fi]||0);fpYTD+=(GS_FP[fi]||0);}
+  var fpYTD=0;for(var fi=0;fi<nFnDone;fi++){fpYTD+=(GS_FP[fi]||0);}
+  var budYTD=0;GS_PNL.forEach(function(a){budYTD+=Math.round(a.byr/26*nFnDone);});budYTD+=fpYTD;
   var actYTD=GS_PNL_TOTAL;
   var vrAmt=actYTD-budYTD;var vrPct=budYTD>0?(vrAmt/budYTD*100):0;
 
@@ -1012,7 +1008,7 @@ function GsTab(){
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#06B6D4'}},fmtFull(budYTD)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'Sawtooth budget + $'+(fpYTD/1000).toFixed(1)+'K departing staff')
+          h('div',{style:{fontSize:10,color:'#64748B'}},'P&L prorated + $'+(fpYTD/1000).toFixed(1)+'K departing staff')
         ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
@@ -1095,7 +1091,7 @@ function GsTab(){
           GS_STAFF.map(function(s,i){
             var yr=pvYr(s);var bfn=Math.round(yr/26);
             var jV=pvAmt(s,s.j);var fV=pvAmt(s,s.f);var mV=pvAmt(s,s.m||0);
-            var ytd=jV+fV+mV;var budYtd=s.t==='Contractor'?(s.bmo*_cmpMo+bfn*_partFn):(bfn*nFnDone);var vr=ytd-budYtd;
+            var ytd=jV+fV+mV;var budYtd=Math.round(pvYr(s)/26*nFnDone);var vr=ytd-budYtd;
             var tc=s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F59E0B':s.t==='PT Hourly'?'#8B5CF6':'#94A3B8';
             return h('tr',{key:i},
               h('td',{style:S.td},i+1),
@@ -1115,7 +1111,7 @@ function GsTab(){
           }),
           (function(){
             var tY=0,tJ=0,tF=0,tM=0,tBud=0;
-            GS_STAFF.forEach(function(s){var yr=pvYr(s);tY+=yr;tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);tM+=pvAmt(s,s.m||0);var bfn=Math.round(yr/26);tBud+=s.t==='Contractor'?(s.bmo*_cmpMo+bfn*_partFn):(bfn*nFnDone);});
+            GS_STAFF.forEach(function(s){var yr=pvYr(s);tY+=yr;tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);tM+=pvAmt(s,s.m||0);tBud+=Math.round(yr/26*nFnDone);});
             var tYTD=tJ+tF+tM;var tVr=tYTD-tBud;
             return h('tr',{style:{background:'#0F172A',fontWeight:700}},
               h('td',{style:S.td},''),
@@ -1134,12 +1130,12 @@ function GsTab(){
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
         gsPV==='net'?'\u26a0\ufe0f Net pay = estimated ~70% of gross for payroll staff. Accurate net requires Xero payslip data pull.':
-        nFnDone+' fortnights: Jan (2fn) + Feb (2fn) + Mar 5 (1fn). Peter/Sophia paid monthly \u2014 creates timing variance in per-fn budget comparison.'),
+        nFnDone+' fortnights: Jan (2fn) + Feb (2fn) + Mar 5 (1fn). Budget = salary/26 \u00d7 '+nFnDone+' (straight-line). Monthly contractors may show timing variance.'),
       /* Fortnightly Trend Chart — blue budget bars + red actual bars */
       (function(){
-        var gsFnData=[];
+        var gsFnData=[];var wbfn=Math.round(GS_WAGES_BYR/26);
         for(var i=0;i<26;i++){
-          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BUD[i]+(GS_FP[i]||0),actual:i<=CURRENT_FN?GS_ACT[i]:null});
+          gsFnData.push({fn:'Fn'+(i+1),budget:wbfn+(GS_FP[i]||0),actual:i<=CURRENT_FN?GS_ACT[i]:null});
         }
         return h('div',{style:{marginTop:20}},
           h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual (inc. Departing Staff)'),
@@ -1160,7 +1156,7 @@ function GsTab(){
           h('div',{style:{marginTop:12,padding:'12px 16px',background:'#1E293B',borderRadius:8,border:'1px solid #334155',fontSize:12,color:'#CBD5E1',lineHeight:'1.6'}},
             h('div',{style:{fontWeight:600,color:'#F8FAFC',marginBottom:6}},'Budget & Variance Notes'),
             h('div',null,
-              'Budget = sawtooth per fn (Peter $13.3K + Sophia $3.3K every other fn) + final pay overlay Fn1\u20138. Actual = P&L wages + final pay. Remaining variance from:'),
+              'Budget = flat $'+Math.round(GS_WAGES_BYR/26/1000)+'K/fn (P&L wages basis) + final pay overlay Fn1\u20138. Actual = Xero cash-basis journals mapped to fortnights. Variance from:'),
             h('ul',{style:{margin:'6px 0 0 16px',padding:0}},
               h('li',null,'HR24 miscodings: ELICOS teachers (~$20K) and SYD super (~$8K) = ~$28K should be in Teaching Cost / Superannuation'),
               h('li',null,'Edward Shelton $7,320 journal recode pending (HR03 \u2192 ELICOS Teaching Cost)'),
