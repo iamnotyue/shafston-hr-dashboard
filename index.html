@@ -1076,7 +1076,7 @@ function ElicosTab(){
                 h('td',{style:S.td},a.name),
                 h('td',{style:S.tdR},fmtFull(a.ytd)),
                 h('td',{style:Object.assign({},S.tdR,{color:aBud>0?'#06B6D4':'#64748B'})},aBud>0?fmtFull(aBud):'$0'),
-                h('td',{style:Object.assign({},S.tdR,{color:aVar>0?'#EF4444':aVar<0?'#10B981':'#64748B'})},aBud>0?((aVar>0?'+':'')+fmtFull(aVar)):'\u2014'),
+                h('td',{style:Object.assign({},S.tdR,{color:aVar>0?'#EF4444':aVar<0?'#10B981':'#64748B'})},(aVar!==0)?((aVar>0?'+':'')+fmtFull(aVar)):'\u2014'),
                 h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
               ));
             });
