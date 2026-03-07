@@ -971,13 +971,12 @@ function GsTab(){
     if(s.l==='SYD')return'HR24';
     return'HR03';
   }
-  /* Pay-view: convert total-cost j/f to gross or net */
+  /* Pay-view: convert total-cost j/f to gross or net (no super in this tab) */
   function pvAmt(s,val){
-    if(gsPV==='total')return val;
     if(gsPV==='gross')return s.sup===0?val:Math.round(val*s.sal/s.tot);
     return s.sup===0?val:Math.round(val*s.sal/s.tot*0.7);
   }
-  function pvYr(s){return gsPV==='total'?s.tot:gsPV==='gross'?s.sal:s.sup===0?s.sal:Math.round(s.sal*0.7);}
+  function pvYr(s){return gsPV==='gross'?s.sal:s.sup===0?s.sal:Math.round(s.sal*0.7);}
 
   return h('div',null,
     h('div',{style:S.section},
@@ -986,16 +985,15 @@ function GsTab(){
         h('span',null,'General Staff \u2014 HR Expenses (ex-Super)'),
         h('span',{style:{fontSize:13,fontWeight:500,color:'#06B6D4'}},'Budget: $'+Math.round(GS_WAGES_BYR/1000)+'K/yr wages \u00b7 14 people')
       ),
-      /* Pay View filter */
+      /* Pay View filter — Gross/Net only, no Total Cost (super excluded from this tab) */
       h('div',{style:Object.assign({},S.filterBar,{marginBottom:12})},
         h('span',{style:S.filterLabel},'Pay View:'),
-        [{key:'gross',label:'Gross Pay'},{key:'net',label:'Net Pay'},{key:'total',label:'Total Cost'}].map(function(v){
+        [{key:'gross',label:'Gross Pay'},{key:'net',label:'Net Pay'}].map(function(v){
           return h('button',{key:v.key,style:gsPV===v.key?S.chipActive:S.chip,onClick:function(){setGsPV(v.key);}},v.label);
         }),
         h('span',{style:{fontSize:11,color:'#64748B',marginLeft:12}},
           gsPV==='gross'?'Gross wages (P&L basis, ex-super)':
-          gsPV==='net'?'Net pay estimate (~70% of gross for payroll, pending Xero payslip data)':
-          'Total employer cost (wages + 12% super for payroll staff)')
+          'Net pay estimate (~70% of gross for payroll, pending Xero payslip data)')
       ),
       /* 3 KPI cards */
       h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
@@ -1061,7 +1059,7 @@ function GsTab(){
           h('th',{style:S.th},'Loc'),
           h('th',{style:S.th},'Type'),
           h('th',{style:S.th},'Acct'),
-          h('th',{style:S.thR},gsPV==='total'?'Total/yr':'Salary/yr'),
+          h('th',{style:S.thR},'Salary/yr'),
           h('th',{style:S.thR},'Budget/fn'),
           h('th',{style:S.thR},'Jan'),
           h('th',{style:S.thR},'Feb'),
@@ -1106,37 +1104,43 @@ function GsTab(){
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
         gsPV==='net'?'\u26a0\ufe0f Net pay = estimated ~70% of gross for payroll staff. Accurate net requires Xero payslip data pull.':
         'Jan/Feb = 2 fortnights each (4fn total). Mar 5 data not yet in staff table. Peter/Sophia paid monthly \u2014 creates high/low alternation.'),
-      /* Fortnightly Trend Chart — bar (actual) + line (budget) */
+      /* Fortnightly Trend Chart — blue budget bars + red actual bars */
       (function(){
         var gsFnData=[];
         for(var i=0;i<26;i++){
           gsFnData.push({fn:'Fn'+(i+1),budget:GS_BFN,actual:i<=CURRENT_FN?GS_ACT[i]:null});
         }
         return h('div',{style:{marginTop:20}},
-          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},
-            h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0'}},'Fortnightly Trend \u2014 Total Employer Cost (Full Year)'),
-            h('div',{style:{fontSize:11,color:'#64748B'}},'Budget includes super for comparability with payroll actuals')
-          ),
+          h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual (Full Year)'),
           h(ResponsiveContainer,{width:'100%',height:280},
-            h(ComposedChart,{data:gsFnData,margin:{top:5,right:10,left:10,bottom:5}},
+            h(BarChart,{data:gsFnData,margin:{top:5,right:10,left:10,bottom:5}},
               h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
               h(XAxis,{dataKey:'fn',tick:{fill:'#94A3B8',fontSize:10},interval:1}),
               h(YAxis,{tick:{fill:'#94A3B8',fontSize:11},tickFormatter:function(v){return'$'+Math.round(v/1000)+'K';},domain:['dataMin-5000','dataMax+5000']}),
               h(Tooltip,{contentStyle:tipStyle,
-                formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget/fn (inc super)':'Actual (inc super)'];},
+                formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget/fn':'Actual/fn'];},
                 labelStyle:{color:'#94A3B8'}}),
-              h(Bar,{dataKey:'actual',fill:'#06B6D4',radius:[4,4,0,0],barSize:28,name:'Actual'},
+              h(Legend,{wrapperStyle:{fontSize:11,color:'#94A3B8'}}),
+              h(Bar,{dataKey:'budget',fill:'#3B82F6',radius:[4,4,0,0],name:'Budget',opacity:0.6}),
+              h(Bar,{dataKey:'actual',fill:'#EF4444',radius:[4,4,0,0],name:'Actual'},
                 gsFnData.map(function(d,i){
-                  var over=d.actual!=null&&d.actual>d.budget;
-                  return h(Cell,{key:i,fill:d.actual==null?'transparent':over?'#EF4444':'#06B6D4'});
+                  return h(Cell,{key:i,fill:d.actual==null?'transparent':'#EF4444'});
                 })
-              ),
-              h(Line,{type:'monotone',dataKey:'budget',stroke:'#F59E0B',strokeWidth:2,strokeDasharray:'6 3',dot:false,name:'Budget',connectNulls:true})
+              )
             )
           ),
-          h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-            'Yellow dashed line = $'+GS_BFN.toLocaleString()+'/fn budget (wages+super). Bars = actual from Xero payroll + contractor invoices. '+
-            'Red = over budget. Note: Peter/Sophia monthly pay causes \u00b1$18K sawtooth between fortnights \u2014 this is normal.')
+          /* Variance explanation note */
+          h('div',{style:{marginTop:12,padding:'12px 16px',background:'#1E293B',borderRadius:8,border:'1px solid #334155',fontSize:12,color:'#CBD5E1',lineHeight:'1.6'}},
+            h('div',{style:{fontWeight:600,color:'#F8FAFC',marginBottom:6}},'Variance Explanation'),
+            h('div',null,
+              'Budget = $'+GS_BFN.toLocaleString()+'/fn (14 people, wages + super). Actual includes non-budget items causing the gap:'),
+            h('ul',{style:{margin:'6px 0 0 16px',padding:0}},
+              h('li',null,'Departing staff (Andy Chen, Austin Huang): ~$36K in final pay, termination payouts'),
+              h('li',null,'HR24 miscodings: ELICOS teachers (~$18K) and SYD super (~$20K) incorrectly coded to HR24 instead of Teaching Cost / Superannuation'),
+              h('li',null,'Edward Shelton $7,320 journal recode pending (HR03 \u2192 ELICOS Teaching Cost)'),
+              h('li',null,'Peter/Sophia monthly pay creates \u00b1$18K sawtooth pattern between fortnights \u2014 this is normal')
+            )
+          )
         );
       })()
     )
