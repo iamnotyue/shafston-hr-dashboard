@@ -53,6 +53,9 @@ var CURRENT_FN = 4; /* 0-based: Fn5 (Mar 5) is latest with data */
 /* GS: $1,076,315/yr = $987,099 wages + $87,216 super */
 var GS_BFN = 41397;
 var GS_BYR = 1076315;
+/* Departing staff final pay per fn (WEI HE, Andy Chen, Austin Huang) */
+/* Fn1-5 from Xero verified totals, Fn6-8 Austin AP remaining. ~$48.8K total */
+var GS_FP = [7400,4350,4350,13800,8300,3535,3535,3535,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 /* ELICOS: $351,263/yr = $331,380 wages + $19,883 super (6% effective) */
 /* Variable per fn: 25hr/wk until Apr 6, then 20hr; GC stops Apr 6 */
 var EL_BFN = [22260,20034,22260,22260,22260,22557,14840,14840,13950,14840,11872,11872,11575,11872,11872,11872,10982,11872,11872,10982,8904,8904,8904,8904,8904,0];
@@ -960,7 +963,8 @@ function VetTab(){
 function GsTab(){
   var pvS=useState('gross');var gsPV=pvS[0];var setGsPV=pvS[1];
   var wBFN=Math.round(GS_WAGES_BYR/26);
-  var budYTD=wBFN*nFnDone;
+  var fpYTD=0;for(var fi=0;fi<nFnDone;fi++)fpYTD+=(GS_FP[fi]||0);
+  var budYTD=wBFN*nFnDone+fpYTD;
   var actYTD=GS_PNL_TOTAL;
   var vrAmt=actYTD-budYTD;var vrPct=budYTD>0?(vrAmt/budYTD*100):0;
 
@@ -1000,7 +1004,7 @@ function GsTab(){
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#06B6D4'}},fmtFull(budYTD)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+wBFN.toLocaleString()+'/fn \u00d7 '+nFnDone+' fn (wages only)')
+          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+wBFN.toLocaleString()+'/fn x '+nFnDone+'fn + $'+(fpYTD/1000).toFixed(1)+'K departing staff')
         ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
@@ -1010,7 +1014,7 @@ function GsTab(){
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(vrAmt>0?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)')}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
           h('div',{style:{fontSize:20,fontWeight:700,color:vrAmt>0?'#EF4444':'#10B981'}},fmtFull(vrAmt)),
-          h('div',{style:{fontSize:10,color:vrAmt>0?'#EF4444':'#10B981'}},fmtPct(vrPct)+' over \u2014 driven by departing staff & HR24 miscodings')
+          h('div',{style:{fontSize:10,color:vrAmt>0?'#EF4444':'#10B981'}},fmtPct(vrPct)+' over \u2014 HR24 miscodings + pending recodes')
         )
       ),
       /* P&L Account Breakdown */
@@ -1047,8 +1051,8 @@ function GsTab(){
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026. Budget = annual salary/26 \u00d7 '+nFnDone+'fn. '+
-        'Variance includes: departing staff (Andy/Austin ~$36K), HR24 miscodings (ELICOS teachers ~$18K, SYD super ~$20K), Edward $7K recode pending.'),
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026. Budget = salary/26 \u00d7 '+nFnDone+'fn + $'+(fpYTD/1000).toFixed(1)+'K departing staff. '+
+        'Remaining variance: HR24 miscodings (ELICOS ~$18K, SYD super ~$20K), Edward $7K + Emma $4K recodes pending.'),
       /* General Staff Table */
       h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'General Staff ('+GS_STAFF.length+' people)'),
       h('table',{style:S.table},
@@ -1108,10 +1112,10 @@ function GsTab(){
       (function(){
         var gsFnData=[];
         for(var i=0;i<26;i++){
-          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BFN,actual:i<=CURRENT_FN?GS_ACT[i]:null});
+          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BFN+(GS_FP[i]||0),actual:i<=CURRENT_FN?GS_ACT[i]:null});
         }
         return h('div',{style:{marginTop:20}},
-          h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual (Full Year)'),
+          h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual (inc. Departing Staff)'),
           h(ResponsiveContainer,{width:'100%',height:280},
             h(BarChart,{data:gsFnData,margin:{top:5,right:10,left:10,bottom:5}},
               h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
@@ -1131,13 +1135,13 @@ function GsTab(){
           ),
           /* Variance explanation note */
           h('div',{style:{marginTop:12,padding:'12px 16px',background:'#1E293B',borderRadius:8,border:'1px solid #334155',fontSize:12,color:'#CBD5E1',lineHeight:'1.6'}},
-            h('div',{style:{fontWeight:600,color:'#F8FAFC',marginBottom:6}},'Variance Explanation'),
+            h('div',{style:{fontWeight:600,color:'#F8FAFC',marginBottom:6}},'Budget & Variance Notes'),
             h('div',null,
-              'Budget = $'+GS_BFN.toLocaleString()+'/fn (14 people, wages + super). Actual includes non-budget items causing the gap:'),
+              'Budget = $'+GS_BFN.toLocaleString()+'/fn (14 people) + departing staff final pay overlay (Fn1\u20138). Remaining variance from:'),
             h('ul',{style:{margin:'6px 0 0 16px',padding:0}},
-              h('li',null,'Departing staff (Andy Chen, Austin Huang): ~$36K in final pay, termination payouts'),
-              h('li',null,'HR24 miscodings: ELICOS teachers (~$18K) and SYD super (~$20K) incorrectly coded to HR24 instead of Teaching Cost / Superannuation'),
+              h('li',null,'HR24 miscodings: ELICOS teachers (~$18K) and SYD super (~$20K) should be in Teaching Cost / Superannuation'),
               h('li',null,'Edward Shelton $7,320 journal recode pending (HR03 \u2192 ELICOS Teaching Cost)'),
+              h('li',null,'Emma $3,725 commission incorrectly in HR03'),
               h('li',null,'Peter/Sophia monthly pay creates \u00b1$18K sawtooth pattern between fortnights \u2014 this is normal')
             )
           )
