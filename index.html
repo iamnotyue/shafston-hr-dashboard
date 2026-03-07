@@ -1005,12 +1005,12 @@ function ElicosTab(){
       ),
       /* Average Hourly Rate Trend */
       (function(){
+        var TOTAL_NET_HRS=4734; /* from shift table: total teaching hours for 2026 */
         var rateData=[];
         for(var i=0;i<26;i++){
-          var wagesBud=EL_BFN[i]/1.06; /* strip super to get wages-only budget */
-          var budHrs=wagesBud/70; /* budget hours = wages budget / $70 target rate */
+          var fnHrs=TOTAL_NET_HRS*EL_BFN[i]/EL_BYR; /* proportional teaching hours per fn */
           var act=i<nFnDone?EL_ACT[i]:null;
-          var rate=(act!==null&&budHrs>0)?Math.round(act/budHrs*100)/100:null;
+          var rate=(act!==null&&fnHrs>0)?Math.round(act/fnHrs*100)/100:null;
           rateData.push({fn:'Fn'+(i+1),rate:rate,target:70});
         }
         return h('div',{style:{marginBottom:20}},
@@ -1027,7 +1027,7 @@ function ElicosTab(){
               )
             )
           ),
-          h('div',{style:{marginTop:4,fontSize:11,color:'#64748B'}},'Avg $/hr = (HR05+HR16+HR07+5-4230 actual) \u00f7 budget teaching hours per fn. Target: $70/hr blended (50% employee + 50% contractor).')
+          h('div',{style:{marginTop:4,fontSize:11,color:'#64748B'}},'Avg $/hr = ELICOS P&L actual \u00f7 teaching hours per fn (4,734 hrs/yr from shift table, no super). Target: $70/hr blended (50% employee + 50% contractor).')
         );
       })(),
       /* ELICOS Teaching Shift Table */
