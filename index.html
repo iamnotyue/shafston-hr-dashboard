@@ -567,15 +567,17 @@ function StaffTab(){
           h('tbody',null,
             GS_STAFF.map(function(s,i){
               var sr=getSuperRate(s.t);
-              var budFn=splitPay(Math.round(s.tot/26),sr===0?0:s.sup/s.tot);
-              /* For budget: gross=sal/26, super=sup/26, total=tot/26 */
+              /* Budget per fortnight for display */
               var bfGross=Math.round(s.sal/26);var bfSup=Math.round(s.sup/26);var bfTotal=bfGross+bfSup;
               var budVal=payView==='gross'?bfGross:payView==='super'?bfSup:bfTotal;
-              /* Actuals: j and f are total cost. Split by super rate */
+              /* Monthly budget for variance (j,f are monthly actuals) */
+              var budMoGross=Math.round(s.sal/12);var budMoSup=Math.round(s.sup/12);var budMoTotal=budMoGross+budMoSup;
+              var budMo=payView==='gross'?budMoGross:payView==='super'?budMoSup:budMoTotal;
+              /* Actuals: j and f are monthly total cost. Split by super rate */
               var jSplit=splitPay(s.j,sr);var fSplit=splitPay(s.f,sr);
               var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
               var ytd=jVal+fVal;
-              var budYtd=budVal*2;
+              var budYtd=budMo*2;
               var v=ytd-budYtd;
               return h('tr',{key:i},
                 h('td',{style:S.td},i+1),
@@ -596,15 +598,15 @@ function StaffTab(){
             }),
             /* GS Total */
             (function(){
-              var tBud=0,tJ=0,tF=0;
+              var tBudMo=0,tJ=0,tF=0;
               GS_STAFF.forEach(function(s){
                 var sr=getSuperRate(s.t);
-                var bG=Math.round(s.sal/26);var bS=Math.round(s.sup/26);
-                tBud+=payView==='gross'?bG:payView==='super'?bS:(bG+bS);
+                var bmG=Math.round(s.sal/12);var bmS=Math.round(s.sup/12);
+                tBudMo+=payView==='gross'?bmG:payView==='super'?bmS:(bmG+bmS);
                 var js=splitPay(s.j,sr);var fs=splitPay(s.f,sr);
                 tJ+=getPayVal(js,payView);tF+=getPayVal(fs,payView);
               });
-              var tYtd=tJ+tF;var tBytd=tBud*2;var tV=tYtd-tBytd;
+              var tYtd=tJ+tF;var tBytd=tBudMo*2;var tV=tYtd-tBytd;
               return h('tr',{style:{background:'#0F172A',fontWeight:700}},
                 h('td',{style:S.td},''),
                 h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
@@ -710,9 +712,11 @@ function StaffTab(){
         h('tbody',null,
           VET_STAFF.map(function(s,i){
             var budFn=payView==='gross'?s.grossFn:payView==='super'?s.supFn:s.totalFn;
+            /* Monthly budget for variance (j,f are monthly actuals) */
+            var budMo=payView==='gross'?Math.round(s.sal/12):payView==='super'?Math.round(s.sup/12):s.bmo;
             var jSplit=splitPay(s.j,0.12);var fSplit=splitPay(s.f,0.12);
             var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
-            var ytd=jVal+fVal;var budYtd=budFn*2;var v=ytd-budYtd;
+            var ytd=jVal+fVal;var budYtd=budMo*2;var v=ytd-budYtd;
             return h('tr',{key:i},
               h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
               h('td',{style:S.td},s.r),
