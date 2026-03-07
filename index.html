@@ -928,7 +928,7 @@ function StaffTab(){
               h(Tooltip,{contentStyle:{background:'#1E293B',border:'1px solid #334155',borderRadius:8},
                 formatter:function(v,n){return[fmtFull(v),n==='budget'?'Budget':'Actual'];},
                 labelStyle:{color:'#94A3B8'}}),
-              h(Bar,{dataKey:'budget',fill:'#334155',radius:[4,4,0,0],name:'Budget'}),
+              h(Bar,{dataKey:'budget',fill:'#3B82F6',radius:[4,4,0,0],name:'Budget',opacity:0.35}),
               h(Bar,{dataKey:'actual',fill:'#06B6D4',radius:[4,4,0,0],name:'Actual'},
                 vetFnData.map(function(d,i){
                   var overBudget=d.actual!=null&&d.actual>d.budget;
