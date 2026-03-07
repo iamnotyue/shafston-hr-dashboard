@@ -875,51 +875,16 @@ function StaffTab(){
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
         'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (Shafston International). Super under general Superannuation account, not in VET P&L. Non-budget = casual teachers + agency fees.'),
-      /* VET Teaching Staff — same format as GS */
+      /* VET Teaching Staff — Lena only, GS format */
       h('div',{style:{marginTop:16,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'VET Teaching Staff'),
       (function(){
-        var vetTR=calcTax(85000)/85000;
-        var rows=VET_STAFF.map(function(s,i){
-          var isBudget=s.sal>0;
-          var jG=Math.round(s.j/1.12);var fG=Math.round(s.f/1.12);
-          var jN=Math.round(jG*(1-vetTR));var fN=Math.round(fG*(1-vetTR));
-          var jVal=vetPV==='gross'?jG:jN;var fVal=vetPV==='gross'?fG:fN;
-          var budFn=isBudget?(vetPV==='gross'?Math.round(s.sal/26):Math.round(Math.round(s.sal/26)*(1-vetTR))):0;
-          var ytd=jVal+fVal;
-          var budYtd=budFn*nFnDone;
-          var vr=isBudget?ytd-budYtd:0;
-          var type=isBudget?'Budget':'Casual';
-          var typeColor=isBudget?'#3B82F6':'#F59E0B';
-          return h('tr',{key:i},
-            h('td',{style:S.td},i+1),
-            h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
-            h('td',{style:S.td},s.r),
-            h('td',{style:S.td},s.l),
-            h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid '+typeColor,color:typeColor}},type)),
-            h('td',{style:Object.assign({},S.tdR,{color:'#10B981'})},isBudget?fmtFull(budFn):'\u2014'),
-            h('td',{style:S.tdR},jVal>0?fmtFull(jVal):'\u2014'),
-            h('td',{style:S.tdR},fVal>0?fmtFull(fVal):'\u2014'),
-            h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(ytd)),
-            h('td',{style:Object.assign({},S.tdR,{color:!isBudget?'#94A3B8':vr>0?'#EF4444':'#10B981'})},!isBudget?'\u2014':fmtFull(vr))
-          );
-        });
-        var totJ=0;var totF=0;var totBfn=0;
-        VET_STAFF.forEach(function(s){
-          var jG=Math.round(s.j/1.12);var fG=Math.round(s.f/1.12);
-          var jN=Math.round(jG*(1-vetTR));var fN=Math.round(fG*(1-vetTR));
-          totJ+=vetPV==='gross'?jG:jN;totF+=vetPV==='gross'?fG:fN;
-          if(s.sal>0)totBfn+=vetPV==='gross'?Math.round(s.sal/26):Math.round(Math.round(s.sal/26)*(1-vetTR));
-        });
-        var totYtd=totJ+totF;var totVar=totYtd-totBfn*nFnDone;
-        rows.push(h('tr',{key:'tot',style:{background:'#0F172A',fontWeight:700}},
-          h('td',{style:S.td},''),h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
-          h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
-          h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(totBfn)),
-          h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(totJ)),
-          h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(totF)),
-          h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#60A5FA'})},fmtFull(totYtd)),
-          h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:totVar>0?'#EF4444':'#10B981'})},fmtFull(totVar))
-        ));
+        var s=VET_STAFF[0];
+        var vetTR=calcTax(s.sal)/s.sal;
+        var jG=Math.round(s.j/1.12);var fG=Math.round(s.f/1.12);
+        var jN=Math.round(jG*(1-vetTR));var fN=Math.round(fG*(1-vetTR));
+        var jVal=vetPV==='gross'?jG:jN;var fVal=vetPV==='gross'?fG:fN;
+        var budFn=vetPV==='gross'?Math.round(s.sal/26):Math.round(Math.round(s.sal/26)*(1-vetTR));
+        var ytd=jVal+fVal;var vr=ytd-budFn*nFnDone;
         return h('table',{style:S.table},
           h('thead',null,
             h('tr',null,
@@ -929,7 +894,20 @@ function StaffTab(){
               h('th',{style:Object.assign({},S.thR,{color:'#60A5FA'})},'YTD'),h('th',{style:S.thR},'Var')
             )
           ),
-          h('tbody',null,rows)
+          h('tbody',null,
+            h('tr',null,
+              h('td',{style:S.td},'1'),
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
+              h('td',{style:S.td},s.r),
+              h('td',{style:S.td},s.l),
+              h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid #3B82F6',color:'#3B82F6'}},'Payroll')),
+              h('td',{style:Object.assign({},S.tdR,{color:'#10B981'})},fmtFull(budFn)),
+              h('td',{style:S.tdR},fmtFull(jVal)),
+              h('td',{style:S.tdR},fmtFull(fVal)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:600,color:'#60A5FA'})},fmtFull(ytd)),
+              h('td',{style:Object.assign({},S.tdR,{color:vr>0?'#EF4444':'#10B981'})},fmtFull(vr))
+            )
+          )
         );
       })(),
       /* Fortnightly Trend Chart — all 26 fn, Budget + Actual bars */
