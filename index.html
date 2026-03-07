@@ -514,23 +514,35 @@ function MonthTab(){
 }
 
 /* ========== TAB 4: STAFF DETAIL ========== */
-/* Pay View filter: controls what $ values are shown across all tables */
-var PAY_VIEWS=[{key:'total',label:'Total Cost'},{key:'gross',label:'Gross Pay'},{key:'super',label:'Super'}];
-
-/* Helper: split a total-cost amount into gross/super based on type */
-function splitPay(amount,superRate){
-  if(!amount||amount===0)return{gross:0,sup:0,total:0};
-  if(superRate===0)return{gross:amount,sup:0,total:amount};
-  var gross=Math.round(amount/((1+superRate)));var sup=amount-gross;
-  return{gross:gross,sup:sup,total:amount};
+/* Australian 2025-26 tax brackets + 2% Medicare levy */
+function calcTax(income){
+  var t;if(income<=18200)t=0;
+  else if(income<=45000)t=(income-18200)*0.16;
+  else if(income<=135000)t=4288+(income-45000)*0.30;
+  else if(income<=190000)t=31288+(income-135000)*0.37;
+  else t=51638+(income-190000)*0.45;
+  return t+income*0.02;
 }
-function getPayVal(split,view){return view==='gross'?split.gross:view==='super'?split.sup:split.total;}
+function effTaxRate(sal){return sal>0?calcTax(sal)/sal:0;}
+
+/* Pay View filter */
+var PAY_VIEWS=[{key:'gross',label:'Gross Pay'},{key:'net',label:'Net Pay'},{key:'super',label:'Super'}];
+
+function splitPay(amount,superRate,taxRate){
+  if(!amount||amount===0)return{gross:0,net:0,sup:0};
+  if(superRate===0)return{gross:amount,net:amount,sup:0};
+  var gross=Math.round(amount/(1+superRate));var sup=amount-gross;
+  var net=Math.round(gross*(1-(taxRate||0)));
+  return{gross:gross,net:net,sup:sup};
+}
+function getPayVal(split,view){return view==='gross'?split.gross:view==='net'?split.net:split.sup;}
 function getSuperRate(type){return type==='Contractor'?0:0.12;}
+function isCon(type){return type==='Contractor';}
 
 function StaffTab(){
-  var pvState=useState('total');var payView=pvState[0];var setPayView=pvState[1];
-  var viewLabel=payView==='gross'?'Gross Pay':payView==='super'?'Super Only':'Total Cost (Gross+Super)';
-  var viewColor=payView==='gross'?'#60A5FA':payView==='super'?'#F59E0B':'#E2E8F0';
+  var pvState=useState('gross');var payView=pvState[0];var setPayView=pvState[1];
+  var viewLabel=payView==='gross'?'Gross Pay (before tax)':payView==='net'?'Net Pay (est. after PAYG tax)':'Superannuation (12%)';
+  var viewColor=payView==='gross'?'#60A5FA':payView==='net'?'#10B981':'#F59E0B';
 
   return h('div',null,
     /* Pay View Filter */
@@ -566,19 +578,20 @@ function StaffTab(){
           ),
           h('tbody',null,
             GS_STAFF.map(function(s,i){
-              var sr=getSuperRate(s.t);
-              /* Budget per fortnight for display */
-              var bfGross=Math.round(s.sal/26);var bfSup=Math.round(s.sup/26);var bfTotal=bfGross+bfSup;
-              var budVal=payView==='gross'?bfGross:payView==='super'?bfSup:bfTotal;
-              /* Monthly budget for variance (j,f are monthly actuals) */
-              var budMoGross=Math.round(s.sal/12);var budMoSup=Math.round(s.sup/12);var budMoTotal=budMoGross+budMoSup;
-              var budMo=payView==='gross'?budMoGross:payView==='super'?budMoSup:budMoTotal;
-              /* Actuals: j and f are monthly total cost. Split by super rate */
-              var jSplit=splitPay(s.j,sr);var fSplit=splitPay(s.f,sr);
+              var sr=getSuperRate(s.t);var co=isCon(s.t);
+              var tr=effTaxRate(s.sal);
+              /* Budget per fortnight */
+              var bfG=Math.round(s.sal/26);var bfS=Math.round(s.sup/26);var bfN=Math.round(bfG*(1-tr));
+              var budVal=payView==='gross'?bfG:payView==='net'?bfN:bfS;
+              /* Monthly budget for variance */
+              var bmG=Math.round(s.sal/12);var bmS=Math.round(s.sup/12);var bmN=Math.round(bmG*(1-tr));
+              var budMo=payView==='gross'?bmG:payView==='net'?bmN:bmS;
+              /* Actuals */
+              var jSplit=splitPay(s.j,sr,tr);var fSplit=splitPay(s.f,sr,tr);
               var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
-              var ytd=jVal+fVal;
-              var budYtd=budMo*2;
-              var v=ytd-budYtd;
+              var ytd=jVal+fVal;var budYtd=budMo*2;var v=ytd-budYtd;
+              /* Contractors: show "—" for net and super */
+              var na=co&&(payView==='net'||payView==='super');
               return h('tr',{key:i},
                 h('td',{style:S.td},i+1),
                 h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
@@ -589,21 +602,23 @@ function StaffTab(){
                   color:s.t==='Payroll'?'#60A5FA':s.t==='Contractor'?'#F97316':'#A78BFA',
                   border:'1px solid '+(s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F97316':'#8B5CF6')
                 })},s.t)),
-                h('td',{style:Object.assign({},S.tdR,{color:viewColor})},budVal>0?fmtFull(budVal):(payView==='super'?'\u2014':fmtFull(0))),
-                h('td',{style:S.tdR},jVal>0?fmtFull(jVal):(payView==='super'&&sr===0?'\u2014':fmtFull(jVal))),
-                h('td',{style:S.tdR},fVal>0?fmtFull(fVal):(payView==='super'&&sr===0?'\u2014':fmtFull(fVal))),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},ytd>0?fmtFull(ytd):(payView==='super'&&sr===0?'\u2014':fmtFull(0))),
-                h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':v>0?'#EF4444':'#94A3B8'})},payView==='super'&&sr===0?'\u2014':fmtFull(v))
+                h('td',{style:Object.assign({},S.tdR,{color:viewColor})},na?'\u2014':fmtFull(budVal)),
+                h('td',{style:S.tdR},na?'\u2014':fmtFull(jVal)),
+                h('td',{style:S.tdR},na?'\u2014':fmtFull(fVal)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},na?'\u2014':fmtFull(ytd)),
+                h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':v>0?'#EF4444':'#94A3B8'})},na?'\u2014':fmtFull(v))
               );
             }),
             /* GS Total */
             (function(){
               var tBudMo=0,tJ=0,tF=0;
               GS_STAFF.forEach(function(s){
-                var sr=getSuperRate(s.t);
-                var bmG=Math.round(s.sal/12);var bmS=Math.round(s.sup/12);
-                tBudMo+=payView==='gross'?bmG:payView==='super'?bmS:(bmG+bmS);
-                var js=splitPay(s.j,sr);var fs=splitPay(s.f,sr);
+                var sr=getSuperRate(s.t);var co=isCon(s.t);var tr=effTaxRate(s.sal);
+                /* Skip contractors for net/super totals */
+                if(co&&payView!=='gross')return;
+                var bmG=Math.round(s.sal/12);var bmS=Math.round(s.sup/12);var bmN=Math.round(bmG*(1-tr));
+                tBudMo+=payView==='gross'?bmG:payView==='net'?bmN:bmS;
+                var js=splitPay(s.j,sr,tr);var fs=splitPay(s.f,sr,tr);
                 tJ+=getPayVal(js,payView);tF+=getPayVal(fs,payView);
               });
               var tYtd=tJ+tF;var tBytd=tBudMo*2;var tV=tYtd-tBytd;
@@ -622,7 +637,7 @@ function StaffTab(){
         )
       ),
       h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
-        'Payroll staff: 12% super. Contractors: no super. Esther PT ($40.49/hr). Miranda hourly ($24.95/hr). Peter via CKW Investment Group.')
+        'Payroll: 12% super. Contractors: no PAYG/super (show \u2014). Net Pay = est. using 2025-26 ATO brackets + 2% Medicare. Totals exclude contractors in Net/Super view.')
     ),
 
     /* ELICOS Teaching Staff */
@@ -647,18 +662,21 @@ function StaffTab(){
           ),
           h('tbody',null,
             EL_STAFF.map(function(s,i){
-              var isCon=s.r.indexOf('Contractor')>=0;var sr=isCon?0:0.12;
-              var jSplit=splitPay(s.j,sr);var fSplit=splitPay(s.f,sr);
+              var co=s.r.indexOf('Contractor')>=0;var sr=co?0:0.12;
+              /* Estimate annual income for tax: rate × 25hrs × 46 weeks */
+              var estAnnual=s.rate>0?s.rate*1150:0;var tr=co?0:effTaxRate(estAnnual);
+              var jSplit=splitPay(s.j,sr,tr);var fSplit=splitPay(s.f,sr,tr);
               var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
               var ytd=jVal+fVal;
+              var na=co&&(payView==='net'||payView==='super');
               return h('tr',{key:i,style:s.s==='Jan only'?{opacity:0.6}:{}},
                 h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
                 h('td',{style:S.td},s.r),
                 h('td',{style:S.td},s.l),
                 h('td',{style:S.tdR},s.rate>0?'$'+s.rate:'\u2014'),
-                h('td',{style:S.tdR},jVal>0?fmtFull(jVal):(payView==='super'&&sr===0?'\u2014':'\u2014')),
-                h('td',{style:S.tdR},fVal>0?fmtFull(fVal):'\u2014'),
-                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},ytd>0?fmtFull(ytd):(payView==='super'&&sr===0?'\u2014':fmtFull(0))),
+                h('td',{style:S.tdR},na?'\u2014':(jVal>0?fmtFull(jVal):'\u2014')),
+                h('td',{style:S.tdR},na?'\u2014':(fVal>0?fmtFull(fVal):'\u2014')),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},na?'\u2014':(ytd>0?fmtFull(ytd):fmtFull(0))),
                 h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
                   background:s.s==='Ongoing'?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)',
                   color:s.s==='Ongoing'?'#10B981':'#EF4444',
@@ -670,8 +688,10 @@ function StaffTab(){
             (function(){
               var tJ=0,tF=0;
               EL_STAFF.forEach(function(s){
-                var isCon=s.r.indexOf('Contractor')>=0;var sr=isCon?0:0.12;
-                tJ+=getPayVal(splitPay(s.j,sr),payView);tF+=getPayVal(splitPay(s.f,sr),payView);
+                var co=s.r.indexOf('Contractor')>=0;var sr=co?0:0.12;
+                if(co&&payView!=='gross')return;
+                var estA=s.rate>0?s.rate*1150:0;var tr=co?0:effTaxRate(estA);
+                tJ+=getPayVal(splitPay(s.j,sr,tr),payView);tF+=getPayVal(splitPay(s.f,sr,tr),payView);
               });
               return h('tr',{style:{background:'#0F172A',fontWeight:700}},
                 h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
@@ -711,10 +731,13 @@ function StaffTab(){
         ),
         h('tbody',null,
           VET_STAFF.map(function(s,i){
-            var budFn=payView==='gross'?s.grossFn:payView==='super'?s.supFn:s.totalFn;
-            /* Monthly budget for variance (j,f are monthly actuals) */
-            var budMo=payView==='gross'?Math.round(s.sal/12):payView==='super'?Math.round(s.sup/12):s.bmo;
-            var jSplit=splitPay(s.j,0.12);var fSplit=splitPay(s.f,0.12);
+            var tr=effTaxRate(s.sal);
+            var bfN=Math.round(s.grossFn*(1-tr));
+            var budFn=payView==='gross'?s.grossFn:payView==='net'?bfN:s.supFn;
+            /* Monthly budget for variance */
+            var bmG=Math.round(s.sal/12);var bmS=Math.round(s.sup/12);var bmN=Math.round(bmG*(1-tr));
+            var budMo=payView==='gross'?bmG:payView==='net'?bmN:bmS;
+            var jSplit=splitPay(s.j,0.12,tr);var fSplit=splitPay(s.f,0.12,tr);
             var jVal=getPayVal(jSplit,payView);var fVal=getPayVal(fSplit,payView);
             var ytd=jVal+fVal;var budYtd=budMo*2;var v=ytd-budYtd;
             return h('tr',{key:i},
