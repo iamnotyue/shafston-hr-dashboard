@@ -104,10 +104,10 @@ var GS_WAGES_BYR = 987099; /* Annual wages budget (ex-super), all 14 people */
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
 var EL_PNL = [
-  {cat:'ELICOS Teaching Cost',code:'HR05',name:'Wages & Salaries - Adult ELICOS',ytd:13619,note:'HSP BNE + PEP BNE teachers'},
-  {cat:'ELICOS Teaching Cost',code:'HR16',name:'Wages & Salaries - U18 ELICOS',ytd:57765,note:'4 classes (HSP/PEP/GC/Mango)'},
-  {cat:'ELICOS Teaching Cost',code:'HR07',name:'Service Fee (Adult ELICOS) - Ready Teacher',ytd:714,note:'Agency fee'},
-  {cat:'Recruitment Expenses',code:'5-4230',name:'Staff Recruitment Expense',ytd:1072,note:'Recruitment'}
+  {cat:'ELICOS Teaching Cost',code:'HR05',name:'Wages & Salaries - Adult ELICOS',ytd:13619,bud:0,note:'HSP BNE + PEP BNE teachers'},
+  {cat:'ELICOS Teaching Cost',code:'HR16',name:'Wages & Salaries - U18 ELICOS',ytd:57765,bud:1,note:'4 classes (HSP/PEP/GC/Mango)'},
+  {cat:'ELICOS Teaching Cost',code:'HR07',name:'Service Fee (Adult ELICOS) - Ready Teacher',ytd:714,bud:0,note:'Agency fee'},
+  {cat:'Recruitment Expenses',code:'5-4230',name:'Staff Recruitment Expense',ytd:1072,bud:0,note:'Recruitment'}
 ];
 var EL_PNL_TOTAL = 73170; /* Total ELICOS Teaching Cost — BNE International only */
 var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contractor × 0% */
@@ -985,13 +985,8 @@ function ElicosTab(){
         h('span',null,'ELICOS Teaching \u2014 Budget vs Actual'),
         h('span',{style:{fontSize:13,fontWeight:500,color:'#F59E0B'}},'Budget: $'+Math.round(EL_BYR/1000)+'K/yr (inc. 6% super) \u00b7 6 classes')
       ),
-      /* 4 KPI cards */
-      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
-        h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Annual Budget'),
-          h('div',{style:{fontSize:20,fontWeight:700,color:'#F59E0B'}},'$'+Math.round(EL_BYR/1000)+'K'),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+Math.round(EL_WAGES_BYR/1000)+'K wages + $'+Math.round((EL_BYR-EL_WAGES_BYR)/1000)+'K super (6%)')
-        ),
+      /* 3 KPI cards — consistent with VET/GS */
+      h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Budget YTD ('+nFnDone+' fn)'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#F59E0B'}},fmtFull(elBudYTD)),
@@ -1000,7 +995,7 @@ function ElicosTab(){
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'P&L Actual YTD'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#F8FAFC'}},fmtFull(elActYTD)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'Xero Cash Basis (BNE+SYD)')
+          h('div',{style:{fontSize:10,color:'#64748B'}},'Xero Cash Basis (International)')
         ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid '+(elVr>0?'rgba(239,68,68,0.2)':'rgba(16,185,129,0.2)')}},
           h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Variance'),
@@ -1018,7 +1013,7 @@ function ElicosTab(){
           h('th',{style:S.thR},'20hr Wks'),
           h('th',{style:S.thR},'Total Wks'),
           h('th',{style:S.thR},'Gross Hrs'),
-          h('th',{style:S.thR},'PH Deduct'),
+          h('th',{style:S.thR},'Public Holiday Deduct'),
           h('th',{style:S.thR},'Net Hrs'),
           h('th',{style:S.thR},'\u00d7$70')
         )),
@@ -1031,7 +1026,7 @@ function ElicosTab(){
               h('td',{style:S.tdR},s.w20||'\u2014'),
               h('td',{style:S.tdR},s.twk),
               h('td',{style:S.tdR},s.gh.toLocaleString()),
-              h('td',{style:Object.assign({},S.tdR,{color:'#EF4444'})},s.ph),
+              h('td',{style:S.tdR},s.ph),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:600})},s.nh.toLocaleString()),
               h('td',{style:Object.assign({},S.tdR,{color:'#F59E0B',fontWeight:600})},'$'+s.cost.toLocaleString())
             );
@@ -1044,7 +1039,7 @@ function ElicosTab(){
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tCls),
               h('td',{style:S.tdR},''),h('td',{style:S.tdR},''),h('td',{style:S.tdR},''),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tGh.toLocaleString()),
-              h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#EF4444'})},tPh),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tPh),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},tNh.toLocaleString()),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#F59E0B'})},'$'+tCost.toLocaleString())
             );
@@ -1052,7 +1047,7 @@ function ElicosTab(){
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Rate: $70/hr blended (50% employee + 50% contractor). 25hr/class/wk until Apr 3, then 20hr from Apr 6. GC stops Apr 6. PH = public holiday deductions.'),
+        'Rate: $70/hr blended (50% employee + 50% contractor). 25hr/class/wk until Apr 3, then 20hr from Apr 6. GC stops Apr 6.'),
       /* P&L Account Breakdown — grouped by category */
       h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'P&L Account Breakdown (Xero Cash Basis \u2014 International)'),
       h('table',{style:S.table},
@@ -1074,12 +1069,14 @@ function ElicosTab(){
                 ));
                 lastCat=a.cat;
               }
+              var aBud=a.bud===1?elBudYTD:0;
+              var aVar=a.ytd-aBud;
               rows.push(h('tr',{key:i},
                 h('td',{style:Object.assign({},S.td,{fontSize:11,color:'#64748B'})},a.code),
                 h('td',{style:S.td},a.name),
                 h('td',{style:S.tdR},fmtFull(a.ytd)),
-                h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'\u2014'),
-                h('td',{style:Object.assign({},S.tdR,{color:'#64748B'})},'\u2014'),
+                h('td',{style:Object.assign({},S.tdR,{color:aBud>0?'#06B6D4':'#64748B'})},aBud>0?fmtFull(aBud):'$0'),
+                h('td',{style:Object.assign({},S.tdR,{color:aVar>0?'#EF4444':aVar<0?'#10B981':'#64748B'})},aBud>0?((aVar>0?'+':'')+fmtFull(aVar)):'\u2014'),
                 h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
               ));
             });
@@ -1091,7 +1088,7 @@ function ElicosTab(){
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(elActYTD)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:'#06B6D4'})},fmtFull(elBudYTD)),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tv>0?'#EF4444':'#10B981'})},(tv>0?'+':'')+fmtFull(tv)),
-              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget by program, not by account')
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget = U18 ELICOS (HR16) only')
             ));
             return rows;
           })()
