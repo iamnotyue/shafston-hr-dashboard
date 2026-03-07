@@ -1003,6 +1003,33 @@ function ElicosTab(){
           h('div',{style:{fontSize:10,color:elVr>0?'#EF4444':'#10B981'}},fmtPct(elVrPct)+' '+(elVr>0?'over budget':'under budget'))
         )
       ),
+      /* Average Hourly Rate Trend */
+      (function(){
+        var rateData=[];
+        for(var i=0;i<26;i++){
+          var wagesBud=EL_BFN[i]/1.06; /* strip super to get wages-only budget */
+          var budHrs=wagesBud/70; /* budget hours = wages budget / $70 target rate */
+          var act=i<nFnDone?EL_ACT[i]:null;
+          var rate=(act!==null&&budHrs>0)?Math.round(act/budHrs*100)/100:null;
+          rateData.push({fn:'Fn'+(i+1),rate:rate,target:70});
+        }
+        return h('div',{style:{marginBottom:20}},
+          h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Average Hourly Rate Trend \u2014 Actual vs $70/hr Target'),
+          h(ResponsiveContainer,{width:'100%',height:220},
+            h(ComposedChart,{data:rateData,margin:{top:10,right:20,bottom:0,left:0}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#1E293B'}),
+              h(XAxis,{dataKey:'fn',tick:{fill:'#64748B',fontSize:10},axisLine:{stroke:'#334155'}}),
+              h(YAxis,{tick:{fill:'#64748B',fontSize:10},axisLine:{stroke:'#334155'},domain:['auto','auto'],tickFormatter:function(v){return '$'+v;}}),
+              h(Tooltip,{contentStyle:{background:'#1E293B',border:'1px solid #334155',borderRadius:8,fontSize:12},formatter:function(v,n){return n==='rate'?['$'+(v?v.toFixed(2):'—'),'Avg $/hr']:['$'+v,'Target'];}}),
+              h(ReferenceLine,{y:70,stroke:'#F59E0B',strokeDasharray:'8 4',strokeWidth:2,label:{value:'$70/hr target',fill:'#F59E0B',fontSize:11,position:'right'}}),
+              h(Bar,{dataKey:'rate',fill:'#3B82F6',radius:[3,3,0,0],maxBarSize:28},
+                h(LabelList,{dataKey:'rate',position:'top',fill:'#94A3B8',fontSize:10,formatter:function(v){return v?'$'+v.toFixed(0):'';}})
+              )
+            )
+          ),
+          h('div',{style:{marginTop:4,fontSize:11,color:'#64748B'}},'Avg $/hr = (HR05+HR16+HR07+5-4230 actual) \u00f7 budget teaching hours per fn. Target: $70/hr blended (50% employee + 50% contractor).')
+        );
+      })(),
       /* ELICOS Teaching Shift Table */
       h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'ELICOS Teaching Shift \u2014 2026 Annual Plan'),
       h('table',{style:S.table},
