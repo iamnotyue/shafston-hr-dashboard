@@ -50,16 +50,16 @@ var FN_MONTH = [0,0,1,1,2,2,3,3,3,4,4,5,5,6,6,7,7,8,8,9,9,9,10,10,11,11];
 var CURRENT_FN = 4; /* 0-based: Fn5 (Mar 5) is latest with data */
 
 /* --- Budgets: total cost (wages + super) per fortnight --- */
-/* GS: $1,076,315/yr = $987,099 wages + $87,216 super */
-var GS_BFN = 41397;
-var GS_BYR = 1076315;
+/* GS: $1,016,315/yr = $927,099 wages + $89,216 super/bonus (14 people) */
+var GS_BFN = 39089;
+var GS_BYR = 1016315;
 /* Departing staff final pay per fn (WEI HE, Andy Chen, Austin Huang) */
 /* Fn1-5 from Xero verified totals, Fn6-8 Austin AP remaining. ~$48.8K total */
 var GS_FP = [7400,4350,4350,13800,8300,3535,3535,3535,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-/* Per-fn budget with Peter/Sophia monthly sawtooth ($16.7K paid every other fn) */
-/* High fn = base $30,273 + Peter $13,333 + Sophia $3,333 = $46,939. Low fn = $30,273 */
+/* Per-fn budget with Peter/Sophia monthly sawtooth ($11.7K paid every other fn) */
+/* High fn = base $33,704 + Peter $8,333 + Sophia $3,333 = $45,370. Low fn = $33,704 */
 /* High fns: 1st fn of each month (0,2,4,6,9,11,13,15,17,19,22,24) */
-var GS_BUD = [46939,30273,46939,30273,46939,30273,46939,30273,30273,46939,30273,46939,30273,46939,30273,46939,30273,46939,30273,46939,30273,30273,46939,30273,46939,30273];
+var GS_BUD = [45370,33704,45370,33704,45370,33704,45370,33704,33704,45370,33704,45370,33704,45370,33704,45370,33704,45370,33704,45370,33704,33704,45370,33704,45370,33704];
 /* ELICOS: $351,263/yr = $331,380 wages + $19,883 super (6% effective) */
 /* Variable per fn: 25hr/wk until Apr 6, then 20hr; GC stops Apr 6 */
 var EL_BFN = [22260,20034,22260,22260,22260,22557,14840,14840,13950,14840,11872,11872,11575,11872,11872,11872,10982,11872,11872,10982,8904,8904,8904,8904,8904,0];
@@ -67,11 +67,11 @@ var EL_BYR = 351263;
 /* VET: $95,200/yr = $85,000 wages + $10,200 super (Lena only) */
 var VET_BFN = 3662;
 var VET_BYR = 95200;
-var TOTAL_BYR = GS_BYR + EL_BYR + VET_BYR; /* $1,522,778 */
+var TOTAL_BYR = GS_BYR + EL_BYR + VET_BYR; /* $1,462,778 */
 
 /* --- Actuals: total cost per fortnight (5 fortnights completed) --- */
 /* GS: from Xero payroll (gross+super) + contractor invoices */
-var GS_ACT = [37760,37760,39768,39768,40500];
+var GS_ACT = [37960,29721,44636,32437,46081];
 /* ELICOS: Xero BNE+SYD ELICOS payroll + contractor invoices. Fn1 low = Christmas shutdown */
 var EL_ACT = [12715,28989,21298,22832,21864];
 /* VET: Xero Fn-VET payroll (Lena + casual teachers). Budget = Lena only */
@@ -96,10 +96,10 @@ var GS_PNL = [
   {code:'HR03',name:'Wages & Salaries - Operation',ytd:141137,byr:573801,note:'8 BNE payroll staff + departing'},
   {code:'HR24',name:'Sydney HR',ytd:74444,byr:153000,note:'Damon+Tiya net. \u26a0 Inc. Anna/Elisha ELICOS wages + SYD super (misallocated)'},
   {code:'HR23',name:'Study Tour Representing',ytd:8759,byr:40000,note:'Sophia contractor'},
-  {code:'5-4251',name:'Consulting & Professional Fees',ytd:36245,byr:220298,note:'Peter+Woojeong+Cassie (HR only)'}
+  {code:'5-4251',name:'Consulting & Professional Fees',ytd:36245,byr:160298,note:'Peter+Woojeong+Cassie (HR only)'}
 ];
 var GS_PNL_TOTAL = 260585;
-var GS_WAGES_BYR = 987099; /* Annual wages budget (ex-super), all 14 people */
+var GS_WAGES_BYR = 927099; /* Annual wages budget (ex-super), all 14 people */
 
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
@@ -115,7 +115,7 @@ var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contra
 
 /* General Staff Roster — 14 people */
 var GS_STAFF = [
-  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,t:'Contractor'},
+  {n:'Peter',r:'Director',l:'BNE',sal:100000,sup:0,tot:100000,bmo:8333,j:8333,f:8333,t:'Contractor'},
   {n:'Iris',r:'Admin Manager',l:'BNE',sal:95000,sup:11400,tot:106400,bmo:8867,j:8185,f:8185,t:'Payroll'},
   {n:'Damon',r:'SYD Operations',l:'SYD',sal:88000,sup:10560,tot:98560,bmo:8213,j:7581,f:7581,t:'Payroll'},
   {n:'Mia',r:'Service',l:'BNE',sal:75000,sup:9000,tot:84000,bmo:7000,j:6462,f:6462,t:'Payroll'},
@@ -125,10 +125,10 @@ var GS_STAFF = [
   {n:'Mika',r:'Sales',l:'BNE',sal:70000,sup:8400,tot:78400,bmo:6533,j:6031,f:6031,t:'Payroll'},
   {n:'Tiya',r:'SYD Support',l:'SYD',sal:65000,sup:7800,tot:74800,bmo:6233,j:5187,f:5600,t:'Payroll'},
   {n:'Esther',r:'Sales (PT)',l:'BNE',sal:64000,sup:7680,tot:71680,bmo:5973,j:2902,f:2902,t:'PT Hourly'},
-  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:2275,f:2275,t:'Hourly'},
-  {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:2180,f:3470,t:'Contractor'},
+  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:0,f:4247,t:'Hourly'},
+  {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:1990,f:3660,t:'Contractor'},
   {n:'Sophia',r:'Consultant',l:'BNE',sal:40000,sup:0,tot:40000,bmo:3333,j:1667,f:3546,t:'Contractor'},
-  {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:721,f:1154,t:'Contractor'}
+  {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:346,f:1529,t:'Contractor'}
 ];
 
 /* VET Teaching Staff — Lena (budget) + casual teachers from Xero Fn-VET calendar */
