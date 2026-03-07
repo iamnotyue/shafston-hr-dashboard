@@ -53,10 +53,9 @@ var CURRENT_FN = 4; /* 0-based: Fn5 (Mar 5) is latest with data */
 /* GS: $1,076,315/yr = $987,099 wages + $89,216 super/bonus (14 people) */
 var GS_BFN = 41397;
 var GS_BYR = 1076315;
-/* GS Final Pay per fn (Zoe,Stephen,Andy,Austin only — GS-coded departures) */
-/* Edward→ELICOS, Todd→OPEX, Emma/Tomoe→Commission (not GS) */
-/* YTD $13,245 (Fn1-5), remaining $7,605 (Fn6-8). Total $20,850 */
-var GS_FP = [3554,1930,1930,0,5831,2535,2535,2535,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+/* GS Final Pay per fn — all 8 departing staff plans (Zoe,Stephen,Todd,Tomoe,Emma,Andy,Edward,Austin) */
+/* YTD $43,408 (Fn1-5), remaining $9,661 (Fn6-8). Total $53,069 */
+var GS_FP = [9111,7487,9543,7614,9653,4591,2535,2535,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 /* Per-fn budget with Peter/Sophia monthly sawtooth ($16.7K paid every other fn) */
 /* High fn = base $30,273 + Peter $13,333 + Sophia $3,333 = $46,939. Low fn = $30,273 */
 /* High fns: 1st fn of each month (0,2,4,6,9,11,13,15,17,19,22,24) */
@@ -209,6 +208,10 @@ var ytdBudget=ytdGB+ytdEB+ytdVB;
 var ytdActual=ytdGA+ytdEA+ytdVA;
 var ytdVar=ytdActual-ytdBudget;
 var ytdVarPct=ytdBudget>0?(ytdVar/ytdBudget*100):0;
+
+/* Monthly contractor budget: completed months × bmo + partial month fns × bfn */
+var _cmpMo=0,_partFn=0;
+(function(){var lastMo=FN_MONTH[CURRENT_FN];for(var mi=0;mi<=lastMo;mi++){var lastFi=-1;for(var fi=0;fi<26;fi++){if(FN_MONTH[fi]===mi)lastFi=fi;}if(lastFi<=CURRENT_FN)_cmpMo++;else{for(var fi=0;fi<26;fi++){if(FN_MONTH[fi]===mi&&fi<=CURRENT_FN)_partFn++;}}}})();
 
 /* Forecast */
 var nFnDone=CURRENT_FN+1;
@@ -1092,7 +1095,7 @@ function GsTab(){
           GS_STAFF.map(function(s,i){
             var yr=pvYr(s);var bfn=Math.round(yr/26);
             var jV=pvAmt(s,s.j);var fV=pvAmt(s,s.f);var mV=pvAmt(s,s.m||0);
-            var ytd=jV+fV+mV;var budYtd=Math.round(yr/26*nFnDone);var vr=ytd-budYtd;
+            var ytd=jV+fV+mV;var budYtd=s.t==='Contractor'?(s.bmo*_cmpMo+bfn*_partFn):(bfn*nFnDone);var vr=ytd-budYtd;
             var tc=s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F59E0B':s.t==='PT Hourly'?'#8B5CF6':'#94A3B8';
             return h('tr',{key:i},
               h('td',{style:S.td},i+1),
@@ -1111,9 +1114,9 @@ function GsTab(){
             );
           }),
           (function(){
-            var tY=0,tJ=0,tF=0,tM=0;
-            GS_STAFF.forEach(function(s){tY+=pvYr(s);tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);tM+=pvAmt(s,s.m||0);});
-            var tYTD=tJ+tF+tM;var tBud=Math.round(tY/26*nFnDone);var tVr=tYTD-tBud;
+            var tY=0,tJ=0,tF=0,tM=0,tBud=0;
+            GS_STAFF.forEach(function(s){var yr=pvYr(s);tY+=yr;tJ+=pvAmt(s,s.j);tF+=pvAmt(s,s.f);tM+=pvAmt(s,s.m||0);var bfn=Math.round(yr/26);tBud+=s.t==='Contractor'?(s.bmo*_cmpMo+bfn*_partFn):(bfn*nFnDone);});
+            var tYTD=tJ+tF+tM;var tVr=tYTD-tBud;
             return h('tr',{style:{background:'#0F172A',fontWeight:700}},
               h('td',{style:S.td},''),
               h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
@@ -1136,7 +1139,7 @@ function GsTab(){
       (function(){
         var gsFnData=[];
         for(var i=0;i<26;i++){
-          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BUD[i]+(GS_FP[i]||0),actual:i<=CURRENT_FN?(GS_ACT[i]+(GS_FP[i]||0)):null});
+          gsFnData.push({fn:'Fn'+(i+1),budget:GS_BUD[i]+(GS_FP[i]||0),actual:i<=CURRENT_FN?(GS_ACT[i]+(GS_FP[i]||0)):(GS_FP[i]?GS_FP[i]:null)});
         }
         return h('div',{style:{marginTop:20}},
           h('div',{style:{fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'Fortnightly Trend \u2014 Budget vs Actual (inc. Departing Staff)'),
