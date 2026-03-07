@@ -104,13 +104,15 @@ var GS_WAGES_BYR = 987099; /* Annual wages budget (ex-super), all 14 people */
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
 var EL_PNL = [
-  {src:'BNE',name:'Adult ELICOS Wages',ytd:13619,note:'HSP BNE + PEP BNE teachers'},
-  {src:'BNE',name:'U18 ELICOS Wages',ytd:57765,note:'4 classes (HSP/PEP/GC/Mango)'},
-  {src:'BNE',name:'Ready Teacher (ELICOS)',ytd:714,note:'Agency fee'},
-  {src:'SYD',name:'Adult ELICOS Wages',ytd:1550,note:'HSP SYD (1 class)'},
-  {src:'SYD',name:'U18 ELICOS Wages',ytd:22760,note:'PEP SYD (1 class)'}
+  {cat:'ELICOS Teaching Cost',code:'HR05',name:'Wages & Salaries - Adult ELICOS',ytd:13619,note:'HSP BNE + PEP BNE teachers'},
+  {cat:'ELICOS Teaching Cost',code:'HR16',name:'Wages & Salaries - U18 ELICOS',ytd:57765,note:'4 classes (HSP/PEP/GC/Mango)'},
+  {cat:'ELICOS Teaching Cost',code:'QHR16',name:'Service Fee (U18 ELICOS) - Qstaff',ytd:0,note:'Qstaff agency'},
+  {cat:'ELICOS Teaching Cost',code:'QHR05',name:'Service Fee (Adult ELICOS) - Qstaff',ytd:0,note:'Qstaff agency'},
+  {cat:'ELICOS Teaching Cost',code:'HR07',name:'Service Fee (Adult ELICOS) - Ready Teacher',ytd:714,note:'Agency fee'},
+  {cat:'Recruitment Expenses',code:'5-4230',name:'Staff Recruitment Expense',ytd:1072,note:'Recruitment'},
+  {cat:'ELICOS Admin Cost',code:'QHR18',name:'Service Fee (ELICOS Casual Teacher Admin) - Qstaff',ytd:0,note:'Admin fee'}
 ];
-var EL_PNL_TOTAL = 96408; /* Total ELICOS P&L wages (ex-super), BNE+SYD */
+var EL_PNL_TOTAL = 73170; /* Total ELICOS Teaching Cost — BNE International only */
 var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contractor × 0% */
 var EL_WAGES_BYR = 331380; /* Annual wages ex-super */
 var EL_SHIFT = [
@@ -1054,37 +1056,47 @@ function ElicosTab(){
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
         'Rate: $70/hr blended (50% employee + 50% contractor). 25hr/class/wk until Apr 3, then 20hr from Apr 6. GC stops Apr 6. PH = public holiday deductions.'),
-      /* P&L Account Breakdown */
-      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'P&L Account Breakdown (Xero Cash Basis)'),
+      /* P&L Account Breakdown — grouped by category */
+      h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'P&L Account Breakdown (Xero Cash Basis \u2014 International)'),
       h('table',{style:S.table},
         h('thead',null,h('tr',null,
-          h('th',{style:S.th},'Source'),
-          h('th',{style:S.th},'P&L Account'),
+          h('th',{style:S.th},'Code'),
+          h('th',{style:S.th},'Account'),
           h('th',{style:S.thR},'YTD Actual'),
           h('th',{style:S.th},'Notes')
         )),
         h('tbody',null,
-          EL_PNL.map(function(a,i){
-            return h('tr',{key:i},
-              h('td',{style:S.td},h('span',{style:{fontSize:11,padding:'2px 8px',borderRadius:4,border:'1px solid '+(a.src==='BNE'?'#3B82F6':'#8B5CF6'),color:a.src==='BNE'?'#3B82F6':'#8B5CF6'}},a.src)),
-              h('td',{style:S.td},a.name),
-              h('td',{style:S.tdR},fmtFull(a.ytd)),
-              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
-            );
-          }),
           (function(){
+            var rows=[];var lastCat='';
+            var cats={};EL_PNL.forEach(function(a){if(!cats[a.cat])cats[a.cat]=0;cats[a.cat]+=a.ytd;});
+            EL_PNL.forEach(function(a,i){
+              if(a.cat!==lastCat){
+                rows.push(h('tr',{key:'cat-'+i,style:{background:'rgba(245,158,11,0.05)'}},
+                  h('td',{colSpan:4,style:Object.assign({},S.td,{fontWeight:700,fontSize:12,color:'#F59E0B',padding:'8px 12px'})},a.cat)
+                ));
+                lastCat=a.cat;
+              }
+              rows.push(h('tr',{key:i,style:a.ytd===0?{opacity:0.4}:{}},
+                h('td',{style:Object.assign({},S.td,{fontSize:11,color:'#64748B'})},a.code),
+                h('td',{style:S.td},a.name),
+                h('td',{style:S.tdR},a.ytd>0?fmtFull(a.ytd):'\u2014'),
+                h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},a.note)
+              ));
+            });
+            /* Total row */
             var tv=elActYTD-elBudYTD;
-            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+            rows.push(h('tr',{key:'total',style:{background:'#0F172A',fontWeight:700}},
               h('td',{style:S.td},''),
-              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'Total ELICOS Teaching Cost'),
               h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(elActYTD)),
-              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget YTD: '+fmtFull(elBudYTD)+' | Variance: '+((tv>0?'+':'')+fmtFull(tv)))
-            );
+              h('td',{style:Object.assign({},S.td,{fontSize:12,color:'#94A3B8'})},'Budget YTD: '+fmtFull(elBudYTD)+' | Var: '+((tv>0?'+':'')+fmtFull(tv)))
+            ));
+            return rows;
           })()
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (BNE + SYD tenants). Budget is variable per fn based on teaching shift schedule.'),
+        'Source: Xero P&L Cash Basis Jan 1\u2013Mar 7 2026 (Shafston International only). Budget is variable per fn based on teaching shift schedule.'),
       /* ELICOS Teaching Staff List */
       h('div',{style:{marginTop:20,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'ELICOS Teaching Staff ('+EL_STAFF.length+' people)'),
       h('table',{style:S.table},
