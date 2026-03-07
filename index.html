@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shafston HR Dashboard 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0B1120;color:#E2E8F0;font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#1E293B}
+::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+</style>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/prop-types@15/prop-types.min.js" crossorigin></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js" crossorigin></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.onerror=function(msg,src,line){document.getElementById('root').innerHTML='<p style="color:#EF4444;padding:40px;font-size:18px;">Dashboard Error: '+msg+' (line '+line+')</p>';};
+
+var h = React.createElement;
+var useState = React.useState;
+var useMemo = React.useMemo;
+var RC = Recharts;
+var BarChart=RC.BarChart, Bar=RC.Bar, LineChart=RC.LineChart, Line=RC.Line,
+    AreaChart=RC.AreaChart, Area=RC.Area, PieChart=RC.PieChart, Pie=RC.Pie, Cell=RC.Cell,
+    ComposedChart=RC.ComposedChart, XAxis=RC.XAxis, YAxis=RC.YAxis,
+    CartesianGrid=RC.CartesianGrid, Tooltip=RC.Tooltip, Legend=RC.Legend,
+    ResponsiveContainer=RC.ResponsiveContainer, ReferenceLine=RC.ReferenceLine,
+    LabelList=RC.LabelList;
+
+/* ========== DATA CONSTANTS ========== */
+var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DATA_DATE = 'Mar 7, 2026';
+
+/* 26 Fortnight Pay Dates (Mon-Sun aligned, Xero payroll) */
+var PAY_DATES = [
+  'Jan 8','Jan 22','Feb 5','Feb 19','Mar 5','Mar 19',
+  'Apr 2','Apr 16','Apr 30','May 14','May 28','Jun 11',
+  'Jun 25','Jul 9','Jul 23','Aug 6','Aug 20','Sep 3',
+  'Sep 17','Oct 1','Oct 15','Oct 29','Nov 12','Nov 26',
+  'Dec 10','Dec 24'
+];
+/* Month index for each fortnight (0=Jan...11=Dec) */
+var FN_MONTH = [0,0,1,1,2,2,3,3,3,4,4,5,5,6,6,7,7,8,8,9,9,9,10,10,11,11];
+var CURRENT_FN = 4; /* 0-based: Fn5 (Mar 5) is latest with data */
+
+/* --- Budgets: total cost (wages + super) per fortnight --- */
+/* GS: $1,076,315/yr = $987,099 wages + $87,216 super */
+var GS_BFN = 41397;
+var GS_BYR = 1076315;
+/* ELICOS: $351,263/yr = $331,380 wages + $19,883 super (6% effective) */
+/* Variable per fn: 25hr/wk until Apr 6, then 20hr; GC stops Apr 6 */
+var EL_BFN = [22260,20034,22260,22260,22260,22557,14840,14840,13950,14840,11872,11872,11575,11872,11872,11872,10982,11872,11872,10982,8904,8904,8904,8904,8904,0];
+var EL_BYR = 351263;
+/* VET: $95,200/yr = $85,000 wages + $10,200 super (Lena only) */
+var VET_BFN = 3662;
+var VET_BYR = 95200;
+var TOTAL_BYR = GS_BYR + EL_BYR + VET_BYR; /* $1,522,778 */
+
+/* --- Actuals: total cost per fortnight (5 fortnights completed) --- */
+/* GS: from Xero payroll (gross+super) + contractor invoices */
+var GS_ACT = [37760,37760,39768,39768,40500];
+/* ELICOS: wages from Xero pay runs × 1.06 super. Fn1 low = Christmas */
+var EL_ACT = [14840,22023,22023,22023,22023];
+/* VET: Lena salaried, assumed at budget rate */
+var VET_ACT = [3662,3662,3662,3662,3662];
+
+/* General Staff Roster — 14 people */
+var GS_STAFF = [
+  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,t:'Contractor'},
+  {n:'Iris',r:'Admin Manager',l:'BNE',sal:95000,sup:11400,tot:106400,bmo:8867,j:8185,f:8185,t:'Payroll'},
+  {n:'Damon',r:'SYD Operations',l:'SYD',sal:88000,sup:10560,tot:98560,bmo:8213,j:7581,f:7581,t:'Payroll'},
+  {n:'Mia',r:'Service',l:'BNE',sal:75000,sup:9000,tot:84000,bmo:7000,j:6462,f:6462,t:'Payroll'},
+  {n:'Vincent',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,t:'Payroll'},
+  {n:'Yidan',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,t:'Payroll'},
+  {n:'Yilia',r:'Admin',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,t:'Payroll'},
+  {n:'Mika',r:'Sales',l:'BNE',sal:70000,sup:8400,tot:78400,bmo:6533,j:6031,f:6031,t:'Payroll'},
+  {n:'Tiya',r:'SYD Support',l:'SYD',sal:65000,sup:7800,tot:74800,bmo:6233,j:5187,f:5600,t:'Payroll'},
+  {n:'Esther',r:'Sales (PT)',l:'BNE',sal:64000,sup:7680,tot:71680,bmo:5973,j:2902,f:2902,t:'PT Hourly'},
+  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:2275,f:2275,t:'Hourly'},
+  {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:2180,f:3470,t:'Contractor'},
+  {n:'Sophia',r:'Consultant',l:'BNE',sal:40000,sup:0,tot:40000,bmo:3333,j:1667,f:3546,t:'Contractor'},
+  {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:721,f:1154,t:'Contractor'}
+];
+
+/* ELICOS Teaching Staff — Jan/Feb data */
+var EL_STAFF = [
+  {n:'Eunice Calaguas',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,s:'Ongoing'},
+  {n:'Wesley Oliver',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,s:'Ongoing'},
+  {n:'Flora Capacci',r:'Teacher',l:'BNE',rate:62,j:2170,f:4495,s:'Ongoing'},
+  {n:'Julia Knieper',r:'Teacher',l:'BNE',rate:62,j:1860,f:4340,s:'Ongoing'},
+  {n:'Joseph Rinella',r:'Contractor',l:'BNE',rate:0,j:3582,f:7860,s:'Ongoing'},
+  {n:'Mila Izyumskaya',r:'Contractor',l:'SYD',rate:0,j:2010,f:2345,s:'Ongoing'},
+  {n:'Paul Besaans',r:'Teacher',l:'BNE',rate:67,j:2680,f:0,s:'Jan only'},
+  {n:'Olena Dmytriieva',r:'Teacher',l:'BNE',rate:62,j:1488,f:0,s:'Jan only'},
+  {n:'Kathryn McMillan',r:'Contractor',l:'BNE',rate:0,j:561,f:0,s:'Jan only'}
+];
+
+/* ========== UTILITIES ========== */
+function fmt(n){if(n==null)return'\u2014';var a=Math.abs(n);var s=a>=1e6?'$'+(a/1e6).toFixed(1)+'M':'$'+Math.round(a).toLocaleString();return n<0?'-'+s:s;}
+function fmtK(n){if(n==null)return'\u2014';return(n<0?'-':'')+'$'+Math.round(Math.abs(n)/1000)+'K';}
+function fmtFull(n){if(n==null)return'\u2014';return(n<0?'-$':'$')+Math.abs(Math.round(n)).toLocaleString();}
+function pct(n){return n==null?'\u2014':n.toFixed(1)+'%';}
+function fmtPct(n){return n==null?'\u2014':(n>=0?'+':'')+n.toFixed(1)+'%';}
+
+/* ========== COMPUTED DATA ========== */
+/* Fortnightly chart data — 26 entries */
+var fnData = [];
+for(var i=0;i<26;i++){
+  var gB=GS_BFN,eB=EL_BFN[i],vB=VET_BFN;
+  var gA=i<=CURRENT_FN?GS_ACT[i]:null;
+  var eA=i<=CURRENT_FN?EL_ACT[i]:null;
+  var vA=i<=CURRENT_FN?VET_ACT[i]:null;
+  fnData.push({fn:'Fn'+(i+1),date:PAY_DATES[i],mi:FN_MONTH[i],
+    gB:gB,eB:eB,vB:vB,budget:gB+eB+vB,
+    gA:gA,eA:eA,vA:vA,actual:gA!=null?(gA+eA+vA):null,hasData:i<=CURRENT_FN});
+}
+
+/* Cumulative data for YTD trajectory chart */
+var cumData=[];var cB=0,cA=0;
+for(var i=0;i<26;i++){
+  cB+=fnData[i].budget;
+  if(i<=CURRENT_FN){cA+=fnData[i].actual;cumData.push({fn:'Fn'+(i+1),budget:cB,actual:cA});}
+  else cumData.push({fn:'Fn'+(i+1),budget:cB,actual:null});
+}
+
+/* Monthly aggregated data */
+var monthData=MONTHS.map(function(m,mi){
+  var fns=[];for(var k=0;k<26;k++){if(FN_MONTH[k]===mi)fns.push(k);}
+  var gB=fns.length*GS_BFN;
+  var eB=fns.reduce(function(s,k){return s+EL_BFN[k];},0);
+  var vB=fns.length*VET_BFN;
+  var gA=0,eA=0,vA=0,has=false;
+  fns.forEach(function(k){if(k<=CURRENT_FN){gA+=GS_ACT[k];eA+=EL_ACT[k];vA+=VET_ACT[k];has=true;}});
+  return {month:m,gB:gB,eB:eB,vB:vB,budget:gB+eB+vB,
+    gA:has?gA:null,eA:has?eA:null,vA:has?vA:null,actual:has?(gA+eA+vA):null,nFn:fns.length};
+});
+
+/* YTD totals */
+var ytdGB=0,ytdEB=0,ytdVB=0,ytdGA=0,ytdEA=0,ytdVA=0;
+for(var i=0;i<=CURRENT_FN;i++){
+  ytdGB+=GS_BFN;ytdEB+=EL_BFN[i];ytdVB+=VET_BFN;
+  ytdGA+=GS_ACT[i];ytdEA+=EL_ACT[i];ytdVA+=VET_ACT[i];
+}
+var ytdBudget=ytdGB+ytdEB+ytdVB;
+var ytdActual=ytdGA+ytdEA+ytdVA;
+var ytdVar=ytdActual-ytdBudget;
+var ytdVarPct=ytdBudget>0?(ytdVar/ytdBudget*100):0;
+
+/* Forecast */
+var nFnDone=CURRENT_FN+1;
+var gsRate=ytdGA/nFnDone; var gsFcast=gsRate*26;
+var elRatio=ytdEA/ytdEB; var elRemBudget=EL_BYR-ytdEB; var elFcast=ytdEA+(elRemBudget*elRatio);
+var vetFcast=VET_BYR;
+var totalFcast=gsFcast+elFcast+vetFcast;
+var fcastVar=totalFcast-TOTAL_BYR;
+var fcastVarPct=(fcastVar/TOTAL_BYR*100);
+
+/* Category breakdown */
+var catData=[
+  {name:'General Staff',key:'gs',budget:ytdGB,actual:ytdGA,color:'#06B6D4',byr:GS_BYR,fyr:Math.round(gsFcast)},
+  {name:'ELICOS Teaching',key:'el',budget:ytdEB,actual:ytdEA,color:'#F59E0B',byr:EL_BYR,fyr:Math.round(elFcast)},
+  {name:'VET Teaching',key:'vet',budget:ytdVB,actual:ytdVA,color:'#10B981',byr:VET_BYR,fyr:Math.round(vetFcast)}
+];
+
+/* Category pie data */
+var pieData=[
+  {name:'GS',value:GS_BYR,color:'#06B6D4'},
+  {name:'ELICOS',value:EL_BYR,color:'#F59E0B'},
+  {name:'VET',value:VET_BYR,color:'#10B981'}
+];
+
+/* ========== STYLES ========== */
+var S = {
+  header:{background:'linear-gradient(135deg,#0F172A 0%,#1E293B 100%)',padding:'16px 32px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #334155',position:'sticky',top:0,zIndex:100},
+  headerTitle:{fontSize:20,fontWeight:700,color:'#F8FAFC',letterSpacing:'-0.02em'},
+  badge:{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:700,letterSpacing:'0.05em'},
+  nav:{display:'flex',gap:4,padding:'12px 32px',background:'#0F172A',borderBottom:'1px solid #1E293B',flexWrap:'wrap'},
+  navBtn:{padding:'8px 16px',borderRadius:8,border:'1px solid transparent',cursor:'pointer',fontSize:13,fontWeight:500,background:'transparent',color:'#94A3B8',transition:'all 0.2s'},
+  navBtnActive:{padding:'8px 16px',borderRadius:8,border:'1px solid #3B82F6',cursor:'pointer',fontSize:13,fontWeight:600,background:'rgba(59,130,246,0.15)',color:'#60A5FA'},
+  content:{padding:'24px 32px',maxWidth:1400,margin:'0 auto'},
+  kpiRow:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:16,marginBottom:24},
+  kpi:{background:'linear-gradient(135deg,#1E293B,#0F172A)',borderRadius:12,padding:'20px',border:'1px solid #334155',position:'relative',overflow:'hidden'},
+  kpiLabel:{fontSize:12,color:'#94A3B8',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:8},
+  kpiValue:{fontSize:28,fontWeight:800,color:'#F8FAFC',fontFeatureSettings:'"tnum"',letterSpacing:'-0.02em'},
+  kpiSub:{fontSize:12,color:'#64748B',marginTop:6},
+  kpiTrend:{fontSize:12,fontWeight:600,marginTop:6},
+  section:{background:'#1E293B',borderRadius:12,padding:24,border:'1px solid #334155',marginBottom:24},
+  sectionTitle:{fontSize:16,fontWeight:700,color:'#F8FAFC',marginBottom:16},
+  chartWrap:{width:'100%',height:320},
+  grid2:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24,marginBottom:24},
+  table:{width:'100%',borderCollapse:'collapse',fontSize:13},
+  th:{padding:'10px 12px',textAlign:'left',borderBottom:'2px solid #334155',color:'#94A3B8',fontWeight:600,fontSize:11,textTransform:'uppercase',letterSpacing:'0.05em'},
+  thR:{padding:'10px 12px',textAlign:'right',borderBottom:'2px solid #334155',color:'#94A3B8',fontWeight:600,fontSize:11,textTransform:'uppercase',letterSpacing:'0.05em'},
+  td:{padding:'10px 12px',borderBottom:'1px solid #1E293B',color:'#E2E8F0',fontFeatureSettings:'"tnum"'},
+  tdR:{padding:'10px 12px',borderBottom:'1px solid #1E293B',color:'#E2E8F0',fontFeatureSettings:'"tnum"',textAlign:'right'},
+  filterBar:{display:'flex',flexWrap:'wrap',gap:6,marginBottom:20,alignItems:'center'},
+  filterLabel:{fontSize:12,fontWeight:600,color:'#94A3B8',marginRight:4,textTransform:'uppercase',letterSpacing:'0.05em'},
+  chip:{padding:'5px 12px',borderRadius:6,border:'1px solid #334155',cursor:'pointer',fontSize:12,fontWeight:500,background:'transparent',color:'#94A3B8',transition:'all 0.2s'},
+  chipActive:{padding:'5px 12px',borderRadius:6,border:'1px solid #3B82F6',cursor:'pointer',fontSize:12,fontWeight:600,background:'rgba(59,130,246,0.15)',color:'#60A5FA'},
+  footer:{textAlign:'center',padding:'16px',color:'#475569',fontSize:11},
+  tag:{display:'inline-block',padding:'2px 8px',borderRadius:4,fontSize:10,fontWeight:700,letterSpacing:'0.05em'}
+};
+
+var tipStyle={background:'#1E293B',border:'1px solid #334155',borderRadius:8,fontSize:12};
+
+/* ========== SHARED COMPONENTS ========== */
+function KpiCard(p){
+  var glowColor=p.alert==='red'?'rgba(239,68,68,0.15)':p.alert==='amber'?'rgba(245,158,11,0.15)':'transparent';
+  var borderColor=p.alert==='red'?'#EF4444':p.alert==='amber'?'#F59E0B':'#334155';
+  var trendColor=p.trendUp===true?'#10B981':p.trendUp===false?'#EF4444':'#94A3B8';
+  return h('div',{style:Object.assign({},S.kpi,{boxShadow:'0 0 20px '+glowColor,borderColor:borderColor})},
+    h('div',{style:S.kpiLabel},p.label),
+    h('div',{style:Object.assign({},S.kpiValue,p.valueColor?{color:p.valueColor}:{})},p.value),
+    p.sub?h('div',{style:S.kpiSub},p.sub):null,
+    p.trend?h('div',{style:Object.assign({},S.kpiTrend,{color:trendColor})},p.trend):null
+  );
+}
+
+function CatFilter(p){
+  var cats=[{key:'all',label:'All Categories'},{key:'gs',label:'General Staff'},{key:'el',label:'ELICOS'},{key:'vet',label:'VET'}];
+  return h('div',{style:S.filterBar},
+    h('span',{style:S.filterLabel},'Category:'),
+    cats.map(function(c){
+      return h('button',{key:c.key,style:p.value===c.key?S.chipActive:S.chip,onClick:function(){p.onChange(c.key);}},c.label);
+    })
+  );
+}
+
+/* Get budget/actual keys based on category filter */
+function getBudgetKey(cat){return cat==='gs'?'gB':cat==='el'?'eB':cat==='vet'?'vB':'budget';}
+function getActualKey(cat){return cat==='gs'?'gA':cat==='el'?'eA':cat==='vet'?'vA':'actual';}
+
+/* ========== TAB 1: YTD OVERVIEW ========== */
+function YtdTab(){
+  var underBudget = ytdVar < 0;
+  var catChartData = catData.map(function(c){
+    return {name:c.name,budget:c.budget,actual:c.actual,color:c.color};
+  });
+
+  return h('div',null,
+    /* KPI Row */
+    h('div',{style:S.kpiRow},
+      h(KpiCard,{label:'Annual Budget',value:fmt(TOTAL_BYR),sub:'GS '+fmtK(GS_BYR)+' | ELICOS '+fmtK(EL_BYR)+' | VET '+fmtK(VET_BYR)}),
+      h(KpiCard,{label:'YTD Budget (5 Fn)',value:fmtFull(ytdBudget),sub:nFnDone+' fortnights completed'}),
+      h(KpiCard,{label:'YTD Actual',value:fmtFull(ytdActual),sub:'GS '+fmtK(ytdGA)+' | ELICOS '+fmtK(ytdEA)+' | VET '+fmtK(ytdVA)}),
+      h(KpiCard,{label:'YTD Variance',value:fmtFull(ytdVar),valueColor:underBudget?'#10B981':'#EF4444',
+        trend:(underBudget?'\u25BC ':'\u25B2 ')+pct(Math.abs(ytdVarPct))+' '+(underBudget?'under budget':'over budget'),trendUp:underBudget}),
+      h(KpiCard,{label:'Forecast Full Year',value:fmt(Math.round(totalFcast)),
+        trend:fmtPct(fcastVarPct)+' vs budget',trendUp:fcastVar<0,
+        sub:'GS '+fmtK(Math.round(gsFcast))+' | ELICOS '+fmtK(Math.round(elFcast))+' | VET '+fmtK(vetFcast)})
+    ),
+
+    /* Charts Row */
+    h('div',{style:S.grid2},
+      /* Cumulative Trajectory Chart */
+      h('div',{style:S.section},
+        h('div',{style:S.sectionTitle},'Cumulative Spending vs Budget Trajectory'),
+        h('div',{style:S.chartWrap},
+          h(ResponsiveContainer,{width:'100%',height:'100%'},
+            h(AreaChart,{data:cumData},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#334155'}),
+              h(XAxis,{dataKey:'fn',stroke:'#94A3B8',fontSize:10,interval:4}),
+              h(YAxis,{stroke:'#94A3B8',fontSize:10,tickFormatter:fmtK}),
+              h(Tooltip,{contentStyle:tipStyle,formatter:function(v){return fmtFull(v);}}),
+              h(Area,{type:'monotone',dataKey:'budget',stroke:'#3B82F6',fill:'rgba(59,130,246,0.1)',strokeWidth:2,name:'Budget',dot:false}),
+              h(Area,{type:'monotone',dataKey:'actual',stroke:'#10B981',fill:'rgba(16,185,129,0.2)',strokeWidth:2,name:'Actual',dot:false,connectNulls:false})
+            )
+          )
+        )
+      ),
+
+      /* Category Breakdown */
+      h('div',{style:S.section},
+        h('div',{style:S.sectionTitle},'YTD by Category (Budget vs Actual)'),
+        h('div',{style:S.chartWrap},
+          h(ResponsiveContainer,{width:'100%',height:'100%'},
+            h(BarChart,{data:catChartData,layout:'vertical',margin:{left:100,right:20}},
+              h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#334155'}),
+              h(XAxis,{type:'number',stroke:'#94A3B8',fontSize:10,tickFormatter:fmtK}),
+              h(YAxis,{type:'category',dataKey:'name',stroke:'#94A3B8',fontSize:12,width:100}),
+              h(Tooltip,{contentStyle:tipStyle,formatter:function(v){return fmtFull(v);}}),
+              h(Bar,{dataKey:'budget',fill:'#3B82F6',name:'Budget',radius:[0,4,4,0],barSize:16}),
+              h(Bar,{dataKey:'actual',fill:'#EF4444',name:'Actual',radius:[0,4,4,0],barSize:16})
+            )
+          )
+        )
+      )
+    ),
+
+    /* Category Detail Table */
+    h('div',{style:S.section},
+      h('div',{style:S.sectionTitle},'Category Summary'),
+      h('table',{style:S.table},
+        h('thead',null,
+          h('tr',null,
+            h('th',{style:S.th},'Category'),
+            h('th',{style:S.thR},'Annual Budget'),
+            h('th',{style:S.thR},'YTD Budget'),
+            h('th',{style:S.thR},'YTD Actual'),
+            h('th',{style:S.thR},'Variance'),
+            h('th',{style:S.thR},'Var %'),
+            h('th',{style:S.thR},'Forecast'),
+            h('th',{style:S.thR},'Fcast vs Budget')
+          )
+        ),
+        h('tbody',null,
+          catData.map(function(c){
+            var v=c.actual-c.budget;var vp=c.budget>0?(v/c.budget*100):0;
+            var fv=c.fyr-c.byr;var fvp=c.byr>0?(fv/c.byr*100):0;
+            return h('tr',{key:c.key,style:{cursor:'default'}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},
+                h('span',{style:{display:'inline-block',width:10,height:10,borderRadius:'50%',background:c.color,marginRight:8}}),c.name),
+              h('td',{style:S.tdR},fmtFull(c.byr)),
+              h('td',{style:S.tdR},fmtFull(c.budget)),
+              h('td',{style:S.tdR},fmtFull(c.actual)),
+              h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':'#EF4444'})},fmtFull(v)),
+              h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':'#EF4444'})},fmtPct(vp)),
+              h('td',{style:S.tdR},fmtFull(c.fyr)),
+              h('td',{style:Object.assign({},S.tdR,{color:fv<0?'#10B981':'#EF4444'})},fmtPct(fvp))
+            );
+          }),
+          /* Total row */
+          h('tr',{style:{background:'#0F172A',fontWeight:700}},
+            h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(TOTAL_BYR)),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(ytdBudget)),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(ytdActual)),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:ytdVar<0?'#10B981':'#EF4444'})},fmtFull(ytdVar)),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:ytdVar<0?'#10B981':'#EF4444'})},fmtPct(ytdVarPct)),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(Math.round(totalFcast))),
+            h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:fcastVar<0?'#10B981':'#EF4444'})},fmtPct(fcastVarPct))
+          )
+        )
+      )
+    ),
+
+    /* Budget Split Donut */
+    h('div',{style:Object.assign({},S.section,{maxWidth:400})},
+      h('div',{style:S.sectionTitle},'Annual Budget Split'),
+      h('div',{style:{width:'100%',height:200}},
+        h(ResponsiveContainer,{width:'100%',height:'100%'},
+          h(PieChart,null,
+            h(Pie,{data:pieData,dataKey:'value',nameKey:'name',cx:'50%',cy:'50%',innerRadius:50,outerRadius:80,paddingAngle:3,label:function(e){return e.name+' '+pct(e.value/TOTAL_BYR*100);}},
+              pieData.map(function(d,i){return h(Cell,{key:i,fill:d.color});})
+            ),
+            h(Tooltip,{contentStyle:tipStyle,formatter:function(v){return fmtFull(v);}})
+          )
+        )
+      )
+    )
+  );
+}
+
+/* ========== TAB 2: FORTNIGHTLY ========== */
+function FnTab(){
+  var cs=useState('all');var cat=cs[0];var setCat=cs[1];
+  var bKey=getBudgetKey(cat);var aKey=getActualKey(cat);
+
+  return h('div',null,
+    h(CatFilter,{value:cat,onChange:setCat}),
+
+    /* Fortnightly Chart */
+    h('div',{style:S.section},
+      h('div',{style:S.sectionTitle},'Fortnightly: Budget vs Actual'+(cat!=='all'?' \u2014 '+{gs:'General Staff',el:'ELICOS Teaching',vet:'VET Teaching'}[cat]:'')),
+      h('div',{style:{width:'100%',height:380}},
+        h(ResponsiveContainer,{width:'100%',height:'100%'},
+          h(ComposedChart,{data:fnData,margin:{top:10,right:10,bottom:10,left:10}},
+            h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#334155'}),
+            h(XAxis,{dataKey:'fn',stroke:'#94A3B8',fontSize:10,interval:0,angle:-45,textAnchor:'end',height:50}),
+            h(YAxis,{stroke:'#94A3B8',fontSize:10,tickFormatter:fmtK}),
+            h(Tooltip,{contentStyle:tipStyle,formatter:function(v,n){return [fmtFull(v),n===bKey?'Budget':'Actual'];},labelFormatter:function(l){var d=fnData.find(function(x){return x.fn===l;});return d?d.fn+' ('+d.date+')':l;}}),
+            h(Bar,{dataKey:aKey,fill:'#EF4444',name:'Actual',radius:[4,4,0,0],barSize:14}),
+            h(Line,{type:'stepAfter',dataKey:bKey,stroke:'#3B82F6',strokeWidth:2,dot:false,name:'Budget'})
+          )
+        )
+      )
+    ),
+
+    /* Fortnightly Table */
+    h('div',{style:S.section},
+      h('div',{style:S.sectionTitle},'Fortnightly Detail'),
+      h('div',{style:{maxHeight:500,overflowY:'auto'}},
+        h('table',{style:S.table},
+          h('thead',null,
+            h('tr',null,
+              h('th',{style:S.th},'Fn'),
+              h('th',{style:S.th},'Pay Date'),
+              h('th',{style:S.thR},'Budget'),
+              h('th',{style:S.thR},'Actual'),
+              h('th',{style:S.thR},'Variance'),
+              h('th',{style:S.thR},'Var %'),
+              h('th',{style:S.thR},'Cum Budget'),
+              h('th',{style:S.thR},'Cum Actual')
+            )
+          ),
+          h('tbody',null,
+            fnData.map(function(d,i){
+              var b=d[bKey];var a=d[aKey];
+              var v=a!=null?(a-b):null;var vp=(a!=null&&b>0)?((a-b)/b*100):null;
+              var cBud=0,cAct=0;
+              for(var k=0;k<=i;k++){cBud+=fnData[k][bKey];if(fnData[k][aKey]!=null)cAct+=fnData[k][aKey];}
+              return h('tr',{key:i,style:d.hasData?{}:{opacity:0.4}},
+                h('td',{style:Object.assign({},S.td,{fontWeight:600})},d.fn),
+                h('td',{style:S.td},d.date),
+                h('td',{style:S.tdR},fmtFull(b)),
+                h('td',{style:S.tdR},a!=null?fmtFull(a):'\u2014'),
+                h('td',{style:Object.assign({},S.tdR,v!=null?{color:v<0?'#10B981':'#EF4444'}:{})},v!=null?fmtFull(v):'\u2014'),
+                h('td',{style:Object.assign({},S.tdR,vp!=null?{color:vp<0?'#10B981':'#EF4444'}:{})},vp!=null?fmtPct(vp):'\u2014'),
+                h('td',{style:S.tdR},fmtFull(cBud)),
+                h('td',{style:S.tdR},d.hasData?fmtFull(cAct):'\u2014')
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+}
+
+/* ========== TAB 3: MONTHLY ========== */
+function MonthTab(){
+  var cs=useState('all');var cat=cs[0];var setCat=cs[1];
+  var bKey=getBudgetKey(cat);var aKey=getActualKey(cat);
+
+  return h('div',null,
+    h(CatFilter,{value:cat,onChange:setCat}),
+
+    /* Monthly Chart */
+    h('div',{style:S.section},
+      h('div',{style:S.sectionTitle},'Monthly: Budget vs Actual'+(cat!=='all'?' \u2014 '+{gs:'General Staff',el:'ELICOS Teaching',vet:'VET Teaching'}[cat]:'')),
+      h('div',{style:{width:'100%',height:380}},
+        h(ResponsiveContainer,{width:'100%',height:'100%'},
+          h(BarChart,{data:monthData,margin:{top:10,right:10,bottom:10,left:10}},
+            h(CartesianGrid,{strokeDasharray:'3 3',stroke:'#334155'}),
+            h(XAxis,{dataKey:'month',stroke:'#94A3B8',fontSize:12}),
+            h(YAxis,{stroke:'#94A3B8',fontSize:10,tickFormatter:fmtK}),
+            h(Tooltip,{contentStyle:tipStyle,formatter:function(v){return fmtFull(v);}}),
+            h(Bar,{dataKey:bKey,fill:'#3B82F6',name:'Budget',radius:[4,4,0,0],barSize:20}),
+            h(Bar,{dataKey:aKey,fill:'#EF4444',name:'Actual',radius:[4,4,0,0],barSize:20})
+          )
+        )
+      )
+    ),
+
+    /* Monthly Table */
+    h('div',{style:S.section},
+      h('div',{style:S.sectionTitle},'Monthly Detail'),
+      h('table',{style:S.table},
+        h('thead',null,
+          h('tr',null,
+            h('th',{style:S.th},'Month'),
+            h('th',{style:S.thR},'Fortnights'),
+            h('th',{style:S.thR},'Budget'),
+            h('th',{style:S.thR},'Actual'),
+            h('th',{style:S.thR},'Variance'),
+            h('th',{style:S.thR},'Var %'),
+            h('th',{style:S.thR},'Cum Budget'),
+            h('th',{style:S.thR},'Cum Actual')
+          )
+        ),
+        h('tbody',null,
+          monthData.map(function(d,i){
+            var b=d[bKey];var a=d[aKey];
+            var v=a!=null?(a-b):null;var vp=(a!=null&&b>0)?((a-b)/b*100):null;
+            var cBud=0,cAct=0;
+            for(var k=0;k<=i;k++){cBud+=monthData[k][bKey];var ma=monthData[k][aKey];if(ma!=null)cAct+=ma;}
+            return h('tr',{key:i,style:a!=null?{}:{opacity:0.4}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},d.month),
+              h('td',{style:S.tdR},d.nFn),
+              h('td',{style:S.tdR},fmtFull(b)),
+              h('td',{style:S.tdR},a!=null?fmtFull(a):'\u2014'),
+              h('td',{style:Object.assign({},S.tdR,v!=null?{color:v<0?'#10B981':'#EF4444'}:{})},v!=null?fmtFull(v):'\u2014'),
+              h('td',{style:Object.assign({},S.tdR,vp!=null?{color:vp<0?'#10B981':'#EF4444'}:{})},vp!=null?fmtPct(vp):'\u2014'),
+              h('td',{style:S.tdR},fmtFull(cBud)),
+              h('td',{style:S.tdR},a!=null?fmtFull(cAct):'\u2014')
+            );
+          }),
+          /* Total row */
+          (function(){
+            var tB=monthData.reduce(function(s,d){return s+d[bKey];},0);
+            var tA=monthData.reduce(function(s,d){return s+(d[aKey]!=null?d[aKey]:0);},0);
+            var completedMonths=monthData.filter(function(d){return d[aKey]!=null;}).length;
+            var tV=tA-monthData.slice(0,completedMonths).reduce(function(s,d){return s+d[bKey];},0);
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'FULL YEAR'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},'26'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tB)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},completedMonths>0?fmtFull(tA)+' (YTD)':'\u2014'),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},'')
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},'Note: Apr and Oct have 3 fortnights; all other months have 2. ELICOS budget varies per fortnight due to 25hr\u219220hr policy shift (Apr 6) and GC campus closure.')
+    )
+  );
+}
+
+/* ========== TAB 4: STAFF DETAIL ========== */
+function StaffTab(){
+  return h('div',null,
+    /* General Staff Section */
+    h('div',{style:S.section},
+      h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
+        h('span',null,'General Staff (14 people)'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#06B6D4'}},'Budget: '+fmtFull(GS_BYR)+'/yr | '+fmtFull(GS_BFN)+'/fn')
+      ),
+      h('div',{style:{overflowX:'auto'}},
+        h('table',{style:S.table},
+          h('thead',null,
+            h('tr',null,
+              h('th',{style:S.th},'#'),
+              h('th',{style:S.th},'Name'),
+              h('th',{style:S.th},'Role'),
+              h('th',{style:S.th},'Loc'),
+              h('th',{style:S.th},'Type'),
+              h('th',{style:S.thR},'Salary'),
+              h('th',{style:S.thR},'Super'),
+              h('th',{style:S.thR},'Budget/yr'),
+              h('th',{style:S.thR},'Budget/mo'),
+              h('th',{style:S.thR},'Jan'),
+              h('th',{style:S.thR},'Feb'),
+              h('th',{style:S.thR},'YTD'),
+              h('th',{style:S.thR},'Var (YTD)')
+            )
+          ),
+          h('tbody',null,
+            GS_STAFF.map(function(s,i){
+              var ytd=s.j+s.f;
+              var budgetYtd=s.bmo*2;
+              var v=ytd-budgetYtd;
+              return h('tr',{key:i},
+                h('td',{style:S.td},i+1),
+                h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
+                h('td',{style:S.td},s.r),
+                h('td',{style:S.td},s.l),
+                h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
+                  background:s.t==='Payroll'?'rgba(59,130,246,0.15)':s.t==='Contractor'?'rgba(249,115,22,0.15)':'rgba(139,92,246,0.15)',
+                  color:s.t==='Payroll'?'#60A5FA':s.t==='Contractor'?'#F97316':'#A78BFA',
+                  border:'1px solid '+(s.t==='Payroll'?'#3B82F6':s.t==='Contractor'?'#F97316':'#8B5CF6')
+                })},s.t)),
+                h('td',{style:S.tdR},fmtFull(s.sal)),
+                h('td',{style:S.tdR},fmtFull(s.sup)),
+                h('td',{style:S.tdR},fmtFull(s.tot)),
+                h('td',{style:S.tdR},fmtFull(s.bmo)),
+                h('td',{style:S.tdR},fmtFull(s.j)),
+                h('td',{style:S.tdR},fmtFull(s.f)),
+                h('td',{style:S.tdR},fmtFull(ytd)),
+                h('td',{style:Object.assign({},S.tdR,{color:v<0?'#10B981':v>0?'#EF4444':'#94A3B8'})},fmtFull(v))
+              );
+            }),
+            /* GS Total */
+            (function(){
+              var tSal=GS_STAFF.reduce(function(s,x){return s+x.sal;},0);
+              var tSup=GS_STAFF.reduce(function(s,x){return s+x.sup;},0);
+              var tTot=GS_STAFF.reduce(function(s,x){return s+x.tot;},0);
+              var tBmo=GS_STAFF.reduce(function(s,x){return s+x.bmo;},0);
+              var tJ=GS_STAFF.reduce(function(s,x){return s+x.j;},0);
+              var tF=GS_STAFF.reduce(function(s,x){return s+x.f;},0);
+              var tYtd=tJ+tF;var tBytd=tBmo*2;var tV=tYtd-tBytd;
+              return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+                h('td',{style:S.td},''),
+                h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL'),
+                h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tSal)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tSup)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tTot)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tBmo)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tYtd)),
+                h('td',{style:Object.assign({},S.tdR,{fontWeight:700,color:tV<0?'#10B981':'#EF4444'})},fmtFull(tV))
+              );
+            })()
+          )
+        )
+      ),
+      h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
+        'Notes: Esther is PT hourly ($40.49/hr). Miranda is hourly ($24.95/hr). Peter salary via CKW Investment Group. Woojeung also teaches ELICOS part-time (counted separately).')
+    ),
+
+    /* ELICOS Teaching Staff */
+    h('div',{style:S.section},
+      h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
+        h('span',null,'ELICOS Teaching Staff'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#F59E0B'}},'Budget: '+fmtFull(EL_BYR)+'/yr')
+      ),
+      h('table',{style:S.table},
+        h('thead',null,
+          h('tr',null,
+            h('th',{style:S.th},'Name'),
+            h('th',{style:S.th},'Role'),
+            h('th',{style:S.th},'Campus'),
+            h('th',{style:S.thR},'Rate/hr'),
+            h('th',{style:S.thR},'Jan'),
+            h('th',{style:S.thR},'Feb'),
+            h('th',{style:S.thR},'YTD'),
+            h('th',{style:S.th},'Status')
+          )
+        ),
+        h('tbody',null,
+          EL_STAFF.map(function(s,i){
+            var ytd=s.j+s.f;
+            return h('tr',{key:i,style:s.s==='Jan only'?{opacity:0.6}:{}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
+              h('td',{style:S.td},s.r),
+              h('td',{style:S.td},s.l),
+              h('td',{style:S.tdR},s.rate>0?'$'+s.rate:'\u2014'),
+              h('td',{style:S.tdR},fmtFull(s.j)),
+              h('td',{style:S.tdR},s.f>0?fmtFull(s.f):'\u2014'),
+              h('td',{style:S.tdR},fmtFull(ytd)),
+              h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
+                background:s.s==='Ongoing'?'rgba(16,185,129,0.15)':'rgba(239,68,68,0.15)',
+                color:s.s==='Ongoing'?'#10B981':'#EF4444',
+                border:'1px solid '+(s.s==='Ongoing'?'#10B981':'#EF4444')
+              })},s.s))
+            );
+          }),
+          /* ELICOS Total */
+          (function(){
+            var tJ=EL_STAFF.reduce(function(s,x){return s+x.j;},0);
+            var tF=EL_STAFF.reduce(function(s,x){return s+x.f;},0);
+            return h('tr',{style:{background:'#0F172A',fontWeight:700}},
+              h('td',{style:Object.assign({},S.td,{fontWeight:700})},'TOTAL (Wages)'),
+              h('td',{style:S.td},''),h('td',{style:S.td},''),h('td',{style:S.td},''),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tF)),
+              h('td',{style:Object.assign({},S.tdR,{fontWeight:700})},fmtFull(tJ+tF)),
+              h('td',{style:S.td},'')
+            );
+          })()
+        )
+      ),
+      h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
+        'ELICOS budget: 25hr/wk classes until Apr 6, then 20hr/wk. GC campus stops Apr 6. Super at 6% effective rate (50% employee/50% contractor model). Xero ELICOS total (Jan-Mar 6): $71,384.')
+    ),
+
+    /* VET Teaching Staff */
+    h('div',{style:S.section},
+      h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
+        h('span',null,'VET Teaching Staff'),
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#10B981'}},'Budget: '+fmtFull(VET_BYR)+'/yr | '+fmtFull(VET_BFN)+'/fn')
+      ),
+      h('table',{style:S.table},
+        h('thead',null,
+          h('tr',null,
+            h('th',{style:S.th},'Name'),
+            h('th',{style:S.th},'Role'),
+            h('th',{style:S.th},'Campus'),
+            h('th',{style:S.thR},'Salary'),
+            h('th',{style:S.thR},'Super'),
+            h('th',{style:S.thR},'Total/yr'),
+            h('th',{style:S.thR},'Budget/mo'),
+            h('th',{style:S.th},'Notes')
+          )
+        ),
+        h('tbody',null,
+          VET_STAFF.map(function(s,i){
+            return h('tr',{key:i},
+              h('td',{style:Object.assign({},S.td,{fontWeight:600})},s.n),
+              h('td',{style:S.td},s.r),
+              h('td',{style:S.td},s.l),
+              h('td',{style:S.tdR},fmtFull(s.sal)),
+              h('td',{style:S.tdR},fmtFull(s.sup)),
+              h('td',{style:S.tdR},fmtFull(s.tot)),
+              h('td',{style:S.tdR},fmtFull(s.bmo)),
+              h('td',{style:S.td},'Only VET teacher on Shafston payroll. Ben & Ram moved to Jo\u2019s team.')
+            );
+          })
+        )
+      )
+    )
+  );
+}
+
+/* ========== MAIN APP ========== */
+var TABS = ['YTD Overview','Fortnightly','Monthly','Staff Detail'];
+
+function App(){
+  var state=useState(0);var activeTab=state[0];var setTab=state[1];
+
+  var underBudget=ytdVar<0;
+  var statusColor=underBudget?'#10B981':'#EF4444';
+  var statusLabel=underBudget?'UNDER BUDGET':'OVER BUDGET';
+
+  var tabContent;
+  switch(activeTab){
+    case 0:tabContent=h(YtdTab);break;
+    case 1:tabContent=h(FnTab);break;
+    case 2:tabContent=h(MonthTab);break;
+    case 3:tabContent=h(StaffTab);break;
+    default:tabContent=h(YtdTab);
+  }
+
+  return h('div',{style:{minHeight:'100vh',background:'#0B1120'}},
+    /* Header */
+    h('div',{style:S.header},
+      h('div',{style:{display:'flex',alignItems:'center',gap:16}},
+        h('div',{style:{width:10,height:10,borderRadius:'50%',background:underBudget?'#10B981':'#EF4444',boxShadow:'0 0 8px '+(underBudget?'#10B981':'#EF4444')}}),
+        h('div',{style:S.headerTitle},'Shafston HR Dashboard 2026')
+      ),
+      h('div',{style:{display:'flex',alignItems:'center',gap:12}},
+        h('div',{style:Object.assign({},S.badge,{background:statusColor+'22',color:statusColor,border:'1px solid '+statusColor})},statusLabel),
+        h('div',{style:Object.assign({},S.badge,{background:'#3B82F622',color:'#60A5FA',border:'1px solid #3B82F6'})},nFnDone+'/26 FN'),
+        h('div',{style:{fontSize:12,color:'#64748B'}},'Data: '+DATA_DATE)
+      )
+    ),
+
+    /* Navigation */
+    h('div',{style:S.nav},
+      TABS.map(function(tab,i){
+        return h('button',{key:i,style:activeTab===i?S.navBtnActive:S.navBtn,onClick:function(){setTab(i);}},tab);
+      })
+    ),
+
+    /* Content */
+    h('div',{style:S.content},tabContent),
+
+    /* Footer */
+    h('div',{style:S.footer},'Shafston International College | HR Dashboard 2026 | Total Budget: '+fmt(TOTAL_BYR)+'/yr ('+nFnDone+' of 26 fortnights) | Source: Xero Payroll + AP Bills | Updated: '+DATA_DATE)
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>
