@@ -80,6 +80,8 @@ var VET_PNL = [
 ];
 var VET_PNL_TOTAL = 31610; /* Total VET P&L wages (ex-super) */
 var LENA_GR_FN = 3269; /* Lena gross wages per fn (salaried) */
+var LENA_NET_FN = 2575; /* Actual net pay per fn from Xero payslip ($2,575.23) */
+var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
 
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
@@ -802,23 +804,20 @@ function StaffTab(){
     h('div',{style:S.section},
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
         h('span',null,'VET Teaching \u2014 Budget vs Actual'),
-        h('span',{style:{fontSize:13,fontWeight:500,color:'#10B981'}},'Budget: $85,000/yr gross wages (Lena only)')
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#10B981'}},'Budget: $85,000/yr gross wages')
       ),
-      /* Pay View filter */
-      h('div',{style:Object.assign({},S.filterBar,{marginBottom:16})},
+      /* Pay View filter — Gross/Net (actual from Xero payslips) */
+      h('div',{style:Object.assign({},S.filterBar,{marginBottom:12})},
         h('span',{style:S.filterLabel},'Pay View:'),
         [{key:'gross',label:'Gross Pay'},{key:'net',label:'Net Pay'}].map(function(v){
           return h('button',{key:v.key,style:vetPV===v.key?S.chipActive:S.chip,onClick:function(){setVetPV(v.key);}},v.label);
         }),
-        h('span',{style:{fontSize:11,color:'#64748B',marginLeft:12}},'Showing: '+(vetPV==='gross'?'Before tax':'Est. after PAYG tax'))
+        h('span',{style:{fontSize:11,color:'#64748B',marginLeft:12}},vetPV==='net'?'Net pay from Xero payslips (actual, not estimated)':'Gross wages (P&L basis)')
       ),
-      /* 3 KPI cards — all on gross/P&L basis, no super */
+      /* 3 KPI cards — gross/P&L basis */
       (function(){
-        var vBytd=LENA_GR_FN*nFnDone;
-        var vAytd=VET_PNL_TOTAL;
-        var vetTaxRate=calcTax(85000)/85000;
-        var dispBudget=vetPV==='gross'?vBytd:Math.round(vBytd*(1-vetTaxRate));
-        var dispActual=vetPV==='gross'?vAytd:Math.round(vAytd*(1-vetTaxRate));
+        var dispBudget=LENA_GR_FN*nFnDone;
+        var dispActual=VET_PNL_TOTAL;
         var dispVar=dispActual-dispBudget;var dispVarPct=dispBudget>0?(dispVar/dispBudget*100):0;
         return h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}},
           h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid #334155'}},
@@ -877,10 +876,10 @@ function StaffTab(){
       h('div',{style:{marginTop:16,fontSize:13,fontWeight:600,color:'#E2E8F0',marginBottom:8}},'VET Teaching Staff'),
       (function(){
         var s=VET_STAFF[0];
-        var vetTR=calcTax(s.sal)/s.sal;
-        var budFn=vetPV==='gross'?LENA_GR_FN:Math.round(LENA_GR_FN*(1-vetTR));
-        var jVal=vetPV==='gross'?s.grossFn*2:Math.round(s.grossFn*2*(1-vetTR));
-        var fVal=vetPV==='gross'?s.grossFn*2:Math.round(s.grossFn*2*(1-vetTR));
+        var payFn=vetPV==='gross'?LENA_GR_FN:LENA_NET_FN;
+        var budFn=payFn;
+        var jVal=payFn*2;
+        var fVal=payFn*2;
         var ytd=jVal+fVal;var vr=ytd-budFn*nFnDone;
         return h('table',{style:S.table},
           h('thead',null,
@@ -909,11 +908,10 @@ function StaffTab(){
       })(),
       /* Fortnightly Trend Chart — all 26 fn, Budget + Actual bars */
       (function(){
-        var vetTR=calcTax(85000)/85000;
         var vetFnData=[];
         for(var i=0;i<26;i++){
-          var bud=LENA_GR_FN;var act=i<=CURRENT_FN?VET_ACT[i]:null;
-          if(vetPV==='net'){bud=Math.round(bud*(1-vetTR));act=act!=null?Math.round(act*(1-vetTR)):null;}
+          var bud=vetPV==='gross'?LENA_GR_FN:LENA_NET_FN;
+          var act=i<=CURRENT_FN?(vetPV==='gross'?VET_ACT[i]:LENA_NET_FN):null;
           vetFnData.push({fn:'Fn'+(i+1),budget:bud,actual:act});
         }
         return h('div',{style:{marginTop:16}},
@@ -936,7 +934,7 @@ function StaffTab(){
             )
           ),
           h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-            vetPV==='net'?'Net pay est. using 2025-26 ATO brackets + 2% Medicare levy.':'Budget = $'+LENA_GR_FN.toLocaleString()+'/fn gross wages (Lena). Red bars = over budget. Blue = budget baseline.')
+            vetPV==='net'?'Net pay = $'+LENA_NET_FN.toLocaleString()+'/fn actual from Xero payslips (PAYG tax $'+LENA_TAX_FN+'/fn). Net view shows Lena only.':'Budget = $'+LENA_GR_FN.toLocaleString()+'/fn gross wages. Red bars = over budget (casuals). Blue = budget baseline.')
         );
       })()
     )
