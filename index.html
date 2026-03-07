@@ -574,7 +574,6 @@ function StaffTab(){
   var pvState=useState('gross');var payView=pvState[0];var setPayView=pvState[1];
   var viewLabel=payView==='gross'?'Gross Pay (before tax)':payView==='net'?'Net Pay (est. after PAYG tax)':'Superannuation (12%)';
   var viewColor=payView==='gross'?'#60A5FA':payView==='net'?'#10B981':'#F59E0B';
-  var vetPVState=useState('gross');var vetPV=vetPVState[0];var setVetPV=vetPVState[1];
 
   return h('div',null,
     /* Pay View Filter */
@@ -717,8 +716,8 @@ function StaffTab(){
           )
         ),
         h('tbody',null,
-          EL_PNL.map(function(a,i){
-            return h('tr',{key:i,style:a.ytd===0?{opacity:0.5}:{}},
+          EL_PNL.filter(function(a){return a.ytd>0;}).map(function(a,i){
+            return h('tr',{key:i},
               h('td',{style:S.td},h('span',{style:Object.assign({},S.tag,{
                 background:a.src==='BNE'?'rgba(59,130,246,0.15)':'rgba(249,115,22,0.15)',
                 color:a.src==='BNE'?'#60A5FA':'#F97316',
@@ -798,9 +797,14 @@ function StaffTab(){
       ),
       h('div',{style:{marginTop:12,fontSize:11,color:'#64748B'}},
         'Gross pay (invoice total for contractors). 50/50 model: employees get 12% super, contractors invoice-based (no super). Fn1 low due to Christmas shutdown (~2.25 wks).')
-    ),
+    )
+  );
+}
 
-    /* VET Teaching — Budget vs Actual */
+/* ========== TAB 5: VET TEACHING ========== */
+function VetTab(){
+  var vetPVState=useState('gross');var vetPV=vetPVState[0];var setVetPV=vetPVState[1];
+  return h('div',null,
     h('div',{style:S.section},
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
         h('span',null,'VET Teaching \u2014 Budget vs Actual'),
@@ -850,10 +854,10 @@ function StaffTab(){
           )
         ),
         h('tbody',null,
-          VET_PNL.map(function(a,i){
+          VET_PNL.filter(function(a){return a.ytd>0;}).map(function(a,i){
             var budgetAmt=a.code==='HR04'?LENA_GR_FN*nFnDone:0;
             var nb=a.ytd-budgetAmt;
-            return h('tr',{key:i,style:a.ytd===0?{opacity:0.5}:{}},
+            return h('tr',{key:i},
               h('td',{style:S.td},h('span',{style:{color:'#64748B',fontSize:11,marginRight:6}},a.code),' ',a.name),
               h('td',{style:S.tdR},a.ytd>0?fmtFull(a.ytd):'\u2014'),
               h('td',{style:Object.assign({},S.tdR,{color:'#10B981'})},budgetAmt>0?fmtFull(budgetAmt):'\u2014'),
@@ -942,7 +946,7 @@ function StaffTab(){
 }
 
 /* ========== MAIN APP ========== */
-var TABS = ['YTD Overview','Fortnightly','Monthly','Staff Detail'];
+var TABS = ['YTD Overview','Fortnightly','Monthly','Staff Detail','VET Teaching'];
 
 function App(){
   var state=useState(0);var activeTab=state[0];var setTab=state[1];
@@ -957,6 +961,7 @@ function App(){
     case 1:tabContent=h(FnTab);break;
     case 2:tabContent=h(MonthTab);break;
     case 3:tabContent=h(StaffTab);break;
+    case 4:tabContent=h(VetTab);break;
     default:tabContent=h(YtdTab);
   }
 
