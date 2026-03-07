@@ -35,7 +35,7 @@ var BarChart=RC.BarChart, Bar=RC.Bar, LineChart=RC.LineChart, Line=RC.Line,
 
 /* ========== DATA CONSTANTS ========== */
 var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var DATA_DATE = 'Mar 7, 2026';
+var DATA_DATE = 'Mar 8, 2026';
 
 /* 26 Fortnight Pay Dates (Mon-Sun aligned, Xero payroll) */
 var PAY_DATES = [
@@ -53,9 +53,10 @@ var CURRENT_FN = 4; /* 0-based: Fn5 (Mar 5) is latest with data */
 /* GS: $1,076,315/yr = $987,099 wages + $89,216 super/bonus (14 people) */
 var GS_BFN = 41397;
 var GS_BYR = 1076315;
-/* Departing staff final pay per fn (WEI HE, Andy Chen, Austin Huang) */
-/* Fn1-5 from Xero verified totals, Fn6-8 Austin AP remaining. ~$48.8K total */
-var GS_FP = [7400,4350,4350,13800,8300,3535,3535,3535,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+/* GS Final Pay per fn (Zoe,Stephen,Andy,Austin only — GS-coded departures) */
+/* Edward→ELICOS, Todd→OPEX, Emma/Tomoe→Commission (not GS) */
+/* YTD $13,245 (Fn1-5), remaining $7,605 (Fn6-8). Total $20,850 */
+var GS_FP = [3554,1930,1930,0,5831,2535,2535,2535,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 /* Per-fn budget with Peter/Sophia monthly sawtooth ($16.7K paid every other fn) */
 /* High fn = base $30,273 + Peter $13,333 + Sophia $3,333 = $46,939. Low fn = $30,273 */
 /* High fns: 1st fn of each month (0,2,4,6,9,11,13,15,17,19,22,24) */
@@ -71,7 +72,7 @@ var TOTAL_BYR = GS_BYR + EL_BYR + VET_BYR; /* $1,522,778 */
 
 /* --- Actuals: total cost per fortnight (5 fortnights completed) --- */
 /* GS: from Xero payroll (gross+super) + contractor invoices */
-var GS_ACT = [37960,29721,44636,32437,46081];
+var GS_ACT = [37960,29721,44636,32437,32748];
 /* ELICOS: Xero BNE+SYD ELICOS payroll + contractor invoices. Fn1 low = Christmas shutdown */
 var EL_ACT = [12715,28989,21298,22832,21864];
 /* VET: Xero Fn-VET payroll (Lena + casual teachers). Budget = Lena only */
@@ -115,7 +116,7 @@ var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contra
 
 /* General Staff Roster — 14 people */
 var GS_STAFF = [
-  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,m:13333,t:'Contractor'},
+  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,m:0,t:'Contractor'},
   {n:'Iris',r:'Admin Manager',l:'BNE',sal:95000,sup:11400,tot:106400,bmo:8867,j:8185,f:8185,m:4092,t:'Payroll'},
   {n:'Damon',r:'SYD Operations',l:'SYD',sal:88000,sup:10560,tot:98560,bmo:8213,j:7581,f:7581,m:3791,t:'Payroll'},
   {n:'Mia',r:'Service',l:'BNE',sal:75000,sup:9000,tot:84000,bmo:7000,j:6462,f:6462,m:3231,t:'Payroll'},
