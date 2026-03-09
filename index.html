@@ -182,13 +182,14 @@ function fmtFull(n){if(n==null)return'\u2014';return(n<0?'-$':'$')+Math.abs(Math
 function pct(n){return n==null?'\u2014':n.toFixed(1)+'%';}
 function fmtPct(n){return n==null?'\u2014':(n>=0?'+':'')+n.toFixed(1)+'%';}
 
-/* 2025 Outstanding: Super Payable balance as of 1 Jan 2026 */
-var SUP_2025_OUT = {bne:68435,syd:50227};
+/* Payroll Super Liability (from Xero Payroll Super Payment page, 9 Mar 2026) */
+/* Total = what Payroll says is owed to super funds. Overdue = pre-2026 quarters */
+var SUP_PAYROLL = {bne:44094,syd:18125,overdueBne:20503,overdueSyd:10000};
 /* Monthly new super from payroll accruals + payments (Xero Super Payable account 826) */
 var SUP_ACT = [
   {mo:'Jan',bne:9479,syd:3205,paid:1087},
   {mo:'Feb',bne:9301,syd:3582,paid:48288},
-  {mo:'Mar',bne:4811,syd:1338,paid:0},
+  {mo:'Mar',bne:4811,syd:1338,paid:0,partial:true},
   {mo:'Apr',bne:null,syd:null,paid:null},{mo:'May',bne:null,syd:null,paid:null},
   {mo:'Jun',bne:null,syd:null,paid:null},{mo:'Jul',bne:null,syd:null,paid:null},
   {mo:'Aug',bne:null,syd:null,paid:null},{mo:'Sep',bne:null,syd:null,paid:null},
@@ -1218,18 +1219,18 @@ function GsTab(){
 }
 
 /* ========== TAB: SUPERANNUATION ========== */
-/* SUP_2025_OUT, SUP_ACT, SUP_BYR, SUP_BMO, SUP_BUD_GS/VET/EL defined in COMPUTED DATA section above */
+/* SUP_PAYROLL, SUP_ACT, SUP_BYR, SUP_BMO defined in data section above */
 
 function SuperTab(){
-  /* Compute totals */
-  var grossOut=SUP_2025_OUT.bne+SUP_2025_OUT.syd; /* original 2025 liability $118,662 */
+  /* Compute totals from Payroll Super Payment page (authoritative) */
+  var overdue=SUP_PAYROLL.overdueBne+SUP_PAYROLL.overdueSyd; /* $30,503 pre-2026 */
+  var totalLiability=SUP_PAYROLL.bne+SUP_PAYROLL.syd; /* $62,219 total owed */
   var newYTD=0;var paidYTD=0;var nMoDone=0;
   SUP_ACT.forEach(function(m){
     if(m.bne!==null){newYTD+=m.bne+m.syd;paidYTD+=(m.paid||0);nMoDone++;}
   });
-  /* 2025 Outstanding = original liability minus payments already made toward it */
-  var outOverdue=grossOut-paidYTD; /* $118,662 - $49,375 = $69,287 */
-  var curPayable=outOverdue+newYTD; /* overdue + new accruals = total payable */
+  var outOverdue=overdue; /* direct from Payroll, no derivation needed */
+  var curPayable=totalLiability; /* total payroll liability */
   var budYTD=SUP_BMO*nMoDone;
 
   /* Chart data — new super per month vs budget */
@@ -1243,7 +1244,7 @@ function SuperTab(){
       /* Title */
       h('div',{style:Object.assign({},S.sectionTitle,{display:'flex',justifyContent:'space-between',alignItems:'center'})},
         h('span',null,'Superannuation Payable Tracker'),
-        h('span',{style:{fontSize:13,fontWeight:500,color:'#A78BFA'}},'Budget: $'+Math.round(SUP_BYR/1000)+'K/yr | Acct 826')
+        h('span',{style:{fontSize:13,fontWeight:500,color:'#A78BFA'}},'Budget: $'+Math.round(SUP_BYR/1000)+'K/yr | Payroll')
       ),
       /* 4 KPI cards: Budget YTD → Actual YTD → Variance → Outstanding */
       h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}},
@@ -1263,9 +1264,9 @@ function SuperTab(){
           h('div',{style:{fontSize:10,color:'#64748B'}},(newYTD>budYTD?'Over':'Under')+' budget')
         ),
         h('div',{style:{background:'#1E293B',borderRadius:8,padding:'12px 16px',border:'1px solid rgba(251,191,36,0.3)'}},
-          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'2025 Outstanding'),
+          h('div',{style:{fontSize:11,color:'#94A3B8',marginBottom:4}},'Overdue (pre-2026)'),
           h('div',{style:{fontSize:20,fontWeight:700,color:'#FBBF24'}},fmtFull(outOverdue)),
-          h('div',{style:{fontSize:10,color:'#64748B'}},'$'+Math.round(grossOut/1000)+'K orig \u2212 $'+Math.round(paidYTD/1000)+'K paid')
+          h('div',{style:{fontSize:10,color:'#64748B'}},'BNE $'+Math.round(SUP_PAYROLL.overdueBne/1000)+'K + SYD $'+Math.round(SUP_PAYROLL.overdueSyd/1000)+'K')
         )
       ),
       /* Budget Breakdown by Category */
@@ -1359,7 +1360,7 @@ function SuperTab(){
         )
       ),
       h('div',{style:{marginTop:8,fontSize:11,color:'#64748B'}},
-        'Source: Xero Super Payable (acct 826). Payable = BNE + SYD new accruals from payroll. Q1 2026 super due 28 Apr.'),
+        'Source: Xero Payroll Super Payment. Total liability: BNE $44K + SYD $18K = $62K. Q1 2026 super due 28 Apr.'),
       /* Monthly Trend Chart */
       (function(){
         return h('div',{style:{marginTop:20}},
