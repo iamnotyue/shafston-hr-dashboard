@@ -35,7 +35,7 @@ var BarChart=RC.BarChart, Bar=RC.Bar, LineChart=RC.LineChart, Line=RC.Line,
 
 /* ========== DATA CONSTANTS ========== */
 var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var DATA_DATE = 'Mar 8, 2026';
+var DATA_DATE = 'Mar 9, 2026';
 
 /* 26 Fortnight Pay Dates (Mon-Sun aligned, Xero payroll) */
 var PAY_DATES = [
@@ -142,7 +142,7 @@ var GS_STAFF = [
   {n:'Mika',r:'Sales',l:'BNE',sal:70000,sup:8400,tot:78400,bmo:6533,j:6031,f:6031,m:3015,t:'Payroll'},
   {n:'Tiya',r:'SYD Support',l:'SYD',sal:65000,sup:7800,tot:74800,bmo:6233,j:5187,f:5600,m:2800,t:'Payroll'},
   {n:'Esther',r:'Sales (PT)',l:'BNE',sal:64000,sup:7680,tot:71680,bmo:5973,j:2902,f:2902,m:3446,t:'PT Hourly'},
-  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:4480,f:4247,m:2124,t:'Hourly'},
+  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:3610,f:4247,m:2124,t:'Hourly'},
   {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:1990,f:3660,m:1973,t:'Contractor'},
   {n:'Sophia',r:'Consultant',l:'BNE',sal:40000,sup:0,tot:40000,bmo:3333,j:1667,f:3546,m:3546,t:'Contractor'},
   {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:346,f:1529,m:231,t:'Contractor'}
@@ -162,15 +162,17 @@ var VET_STAFF = [
 
 /* ELICOS Teaching Staff — Jan/Feb/Mar data (gross wages from Xero payroll) */
 var EL_STAFF = [
-  {n:'Eunice Calaguas',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,m:3900,s:'Ongoing'},
-  {n:'Wesley Oliver',r:'Teacher',l:'BNE',rate:78,j:5070,f:5460,m:3510,s:'Ongoing'},
-  {n:'Flora Capacci',r:'Teacher',l:'BNE',rate:62,j:2170,f:4495,m:2170,s:'Ongoing'},
-  {n:'Julia Knieper',r:'Teacher',l:'BNE',rate:62,j:1860,f:4340,m:930,s:'Ongoing'},
-  {n:'Joseph Rinella',r:'Contractor',l:'BNE',rate:78,j:3582,f:7860,m:0,s:'Ongoing'},
-  {n:'Elisha Sharma',r:'Teacher (Casual)',l:'SYD',rate:62,j:1736,f:4166,m:2695,s:'Ongoing'},
+  {n:'Eunice Calaguas',r:'Teacher',l:'BNE',rate:78,j:5070,f:7215,m:3900,s:'Ongoing'},
+  {n:'Wesley Oliver',r:'Teacher',l:'BNE',rate:78,j:5070,f:7410,m:3510,s:'Ongoing'},
+  {n:'Flora Capacci',r:'Teacher',l:'BNE',rate:62,j:2170,f:3720,m:2170,s:'Ongoing'},
+  {n:'Julia Knieper',r:'Teacher',l:'BNE',rate:62,j:1860,f:2170,m:930,s:'Ongoing'},
+  {n:'Joseph Rinella',r:'Contractor',l:'BNE',rate:78,j:3582,f:7860,m:3900,s:'Ongoing'},
+  {n:'Elisha Sharma',r:'Teacher (Casual)',l:'SYD',rate:62,j:1550,f:3720,m:2695,s:'Ongoing'},
   {n:'Paul Besaans',r:'Teacher',l:'BNE',rate:67,j:2680,f:0,m:0,s:'Jan only'},
   {n:'Olena Dmytriieva',r:'Teacher',l:'BNE',rate:62,j:1488,f:0,s:'Jan only'},
-  {n:'Kathryn McMillan',r:'Contractor',l:'BNE',rate:0,j:561,f:0,s:'Jan only'}
+  {n:'Anna Skorobach',r:'Teacher (Casual)',l:'SYD',rate:62,j:4030,f:6055,m:1760,s:'Ongoing'},
+  {n:'Mila Izyumskaya',r:'Contractor',l:'SYD',rate:67,j:2010,f:2345,m:670,s:'Ongoing'},
+  {n:'Kathryn McMillan',r:'Contractor',l:'BNE',rate:67,j:1633,f:0,m:0,s:'Jan only'}
 ];
 
 /* ========== UTILITIES ========== */
