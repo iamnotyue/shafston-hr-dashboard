@@ -35,7 +35,7 @@ var BarChart=RC.BarChart, Bar=RC.Bar, LineChart=RC.LineChart, Line=RC.Line,
 
 /* ========== DATA CONSTANTS ========== */
 var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var DATA_DATE = 'Mar 26, 2026';
+var DATA_DATE = 'Apr 13, 2026';
 
 /* 26 Fortnight Pay Dates (Mon-Sun aligned, Xero payroll) */
 var PAY_DATES = [
@@ -47,7 +47,7 @@ var PAY_DATES = [
 ];
 /* Month index for each fortnight (0=Jan...11=Dec) */
 var FN_MONTH = [0,0,1,1,2,2,3,3,3,4,4,5,5,6,6,7,7,8,8,9,9,9,10,10,11,11];
-var CURRENT_FN = 5; /* 0-based: Fn6 (Mar 19) is latest with data */
+var CURRENT_FN = 6; /* 0-based: Fn7 (Apr 2) is latest with data */
 
 /* --- Budgets: total cost (wages + super) per fortnight --- */
 /* GS: 2026 pro-rated. Fn1-7: 14 people ($41,397/fn). Fn8: -Iris -Mika ($36,135/fn). Fn9+: -Mia +2 new ($37,289/fn) */
@@ -79,21 +79,21 @@ var VET_NET_RATIO = 0.79;
 
 /* --- Actuals: P&L wages per fn (cash basis, from HR03+HR24+HR23+5-4251 journals) --- */
 /* GS: Xero transactions mapped to fortnights. Total = GS_PNL_TOTAL ($260,585) */
-var GS_ACT = [41902,44314,41966,60279,35585,32773];
+var GS_ACT = [41902,44314,41966,61317,35585,32773,42361];
 /* ELICOS: Xero BNE+SYD ELICOS payroll + contractor invoices. Fn1 low = Christmas shutdown */
-var EL_ACT = [8653,25446,19074,19736,18126,16823];
+var EL_ACT = [8653,25446,19074,19736,18126,16823,14144];
 /* VET: Xero Fn-VET payroll (Lena + casual teachers). Budget = Lena only */
-var VET_ACT = [5944,6619,7953,6024,5069,2040];
+var VET_ACT = [5944,6619,7953,6024,5069,2040,2040];
 
 /* VET P&L Account Breakdown — BNE Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne */
 var VET_PNL = [
-  {code:'HR04',name:'Wages & Salaries - VET',ytd:30861,note:'Payroll: Lena + casuals'},
+  {code:'HR04',name:'Wages & Salaries - VET',ytd:32901,note:'Payroll: Lena + casuals'},
   {code:'HR20',name:'Ready Teacher Fee',ytd:2789,note:'Agency invoice'},
   {code:'QHR04',name:'Qstaff Teaching',ytd:0,note:'No activity'},
   {code:'QHR22',name:'Qstaff Non-Teaching',ytd:0,note:'No activity'}
 ];
-var VET_PNL_TOTAL = 33650; /* Total VET P&L wages (ex-super) */
+var VET_PNL_TOTAL = 35690; /* Total VET P&L wages (ex-super) */
 var LENA_GR_FN = 3269; /* Lena gross wages per fn (salaried) */
 var LENA_NET_FN = 2575; /* Actual net pay per fn from Xero payslip ($2,575.23) */
 var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
@@ -101,23 +101,23 @@ var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
 /* General Staff P&L — HR-General Staff section, Cash Basis Jan 1 – Mar 7 2026 */
 /* Source: Xero P&L screenshot from Peter */
 var GS_PNL = [
-  {code:'HR03',name:'Wages & Salaries - Operation',ytd:167091,byr:503262,note:'BNE payroll staff (pro-rated: -Iris fn7, -Mika fn7, -Mia fn8, +2 new fn9)'},
-  {code:'HR24',name:'Sydney HR',ytd:42249,byr:153000,note:'Damon+Tiya net. \u26a0 Inc. Anna/Elisha ELICOS wages + SYD super (misallocated)'},
-  {code:'HR23',name:'Study Tour Representing',ytd:8759,byr:40000,note:'Sophia contractor'},
-  {code:'5-4251',name:'Consulting & Professional Fees',ytd:38719,byr:220298,note:'Peter+Woojeong+Cassie (HR only)'}
+  {code:'HR03',name:'Wages & Salaries - Operation',ytd:198647,byr:503262,note:'BNE payroll staff (pro-rated: -Iris fn7, -Mika fn7, -Mia fn8, +2 new fn9)'},
+  {code:'HR24',name:'Sydney HR',ytd:48574,byr:153000,note:'Damon+Tiya net. \u26a0 Inc. Anna/Elisha ELICOS wages + SYD super (misallocated)'},
+  {code:'HR23',name:'Study Tour Representing',ytd:12305,byr:40000,note:'Sophia contractor'},
+  {code:'5-4251',name:'Consulting & Professional Fees',ytd:40693,byr:220298,note:'Peter+Woojeong+Cassie (HR only)'}
 ];
-var GS_PNL_TOTAL = 256819;
+var GS_PNL_TOTAL = 300218;
 var GS_WAGES_BYR = 916560; /* Annual wages budget (ex-super), 2026 pro-rated: -Iris(fn7) -Mika(fn7) -Mia(fn8) +2 new(fn9) */
 
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
 var EL_PNL = [
-  {cat:'ELICOS Teaching Cost',code:'HR16',name:'Wages & Salaries - U18 ELICOS',ytd:70386,bud:1,note:'4 classes (HSP/PEP/GC/Mango)'},
-  {cat:'ELICOS Teaching Cost',code:'HR25',name:'Sydney Teaching - U18 ELICOS',ytd:23138,bud:0,note:'SYD ELICOS teachers (Anna, Elisha)'},
+  {cat:'ELICOS Teaching Cost',code:'HR16',name:'Wages & Salaries - U18 ELICOS',ytd:82086,bud:1,note:'4 classes (HSP/PEP/GC/Mango)'},
+  {cat:'ELICOS Teaching Cost',code:'HR25',name:'Sydney Teaching - U18 ELICOS',ytd:25582,bud:0,note:'SYD ELICOS teachers (Anna, Elisha)'},
   {cat:'ELICOS Teaching Cost',code:'HR05',name:'Wages & Salaries - Adult ELICOS',ytd:13619,bud:0,note:'HSP BNE + PEP BNE teachers'},
   {cat:'ELICOS Teaching Cost',code:'HR07',name:'Service Fee (Adult ELICOS) - Ready Teacher',ytd:714,bud:0,note:'Agency fee'}
 ];
-var EL_PNL_TOTAL = 107857; /* Total ELICOS Teaching Cost — BNE + SYD */
+var EL_PNL_TOTAL = 122001; /* Total ELICOS Teaching Cost — BNE + SYD */
 var EL_TUITION_U18 = 75632; /* Account 4-1200 Tuition Fee U18 ELICOS — Xero Cash Basis YTD */
 var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contractor × 0% */
 var EL_WAGES_BYR = 331380; /* Annual wages ex-super */
@@ -131,49 +131,51 @@ var EL_SHIFT = [
 
 /* General Staff Roster — 2026 pro-rated (Iris/Mika leave fn7, Mia leaves fn8, 2 new hires fn9) */
 var GS_STAFF = [
-  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,m:0,t:'Contractor'},
-  {n:'Iris',r:'Admin Manager',l:'BNE',sal:95000,sup:11400,tot:106400,bmo:8867,j:8185,f:8185,m:4092,t:'Payroll',dep:'Apr 2'},
-  {n:'Damon',r:'SYD Operations',l:'SYD',sal:88000,sup:10560,tot:98560,bmo:8213,j:7581,f:7581,m:3791,t:'Payroll'},
-  {n:'Mia',r:'Service',l:'BNE',sal:75000,sup:9000,tot:84000,bmo:7000,j:6462,f:6462,m:3231,t:'Payroll',dep:'Apr 16'},
-  {n:'Vincent',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:3166,t:'Payroll'},
-  {n:'Yidan',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:3166,t:'Payroll'},
-  {n:'Yilia',r:'Admin',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:3166,t:'Payroll'},
-  {n:'Mika',r:'Sales',l:'BNE',sal:70000,sup:8400,tot:78400,bmo:6533,j:6031,f:6031,m:3015,t:'Payroll',dep:'Apr 2'},
-  {n:'Tiya',r:'SYD Support',l:'SYD',sal:65000,sup:7800,tot:74800,bmo:6233,j:5187,f:5600,m:2800,t:'Payroll'},
-  {n:'Esther',r:'Sales (PT)',l:'BNE',sal:64000,sup:7680,tot:71680,bmo:5973,j:2902,f:2902,m:3446,t:'PT Hourly'},
-  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:3610,f:4247,m:2124,t:'Hourly'},
-  {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:1990,f:3660,m:1973,t:'Contractor'},
-  {n:'Sophia',r:'Consultant',l:'BNE',sal:40000,sup:0,tot:40000,bmo:3333,j:1667,f:3546,m:3546,t:'Contractor'},
-  {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:346,f:1529,m:231,t:'Contractor'},
-  {n:'New Hire 1',r:'Service (TBD)',l:'BNE',sal:0,sup:0,tot:0,bmo:0,j:0,f:0,m:0,t:'Payroll',start:'Apr 30'},
-  {n:'New Hire 2',r:'Service (TBD)',l:'BNE',sal:0,sup:0,tot:0,bmo:0,j:0,f:0,m:0,t:'Payroll',start:'Apr 30'}
+  {n:'Peter',r:'Director',l:'BNE',sal:160000,sup:0,tot:160000,bmo:13333,j:13333,f:13333,m:0,a:0,t:'Contractor'},
+  {n:'Iris',r:'Admin Manager',l:'BNE',sal:95000,sup:11400,tot:106400,bmo:8867,j:8185,f:8185,m:8185,a:4281,t:'Payroll',dep:'Apr 2'},
+  {n:'Damon',r:'SYD Operations',l:'SYD',sal:88000,sup:10560,tot:98560,bmo:8213,j:7581,f:7581,m:7581,a:2655,t:'Payroll'},
+  {n:'Mia',r:'Service',l:'BNE',sal:75000,sup:9000,tot:84000,bmo:7000,j:6462,f:6462,m:6462,a:2315,t:'Payroll',dep:'Apr 16'},
+  {n:'Vincent',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:6332,a:2275,t:'Payroll'},
+  {n:'Yidan',r:'Sales',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:6332,a:2275,t:'Payroll'},
+  {n:'Yilia',r:'Admin',l:'BNE',sal:73500,sup:8820,tot:82320,bmo:6860,j:6332,f:6332,m:6332,a:2275,t:'Payroll'},
+  {n:'Mika',r:'Sales',l:'BNE',sal:70000,sup:8400,tot:78400,bmo:6533,j:6031,f:6031,m:6031,a:2043,t:'Payroll',dep:'Apr 2'},
+  {n:'Tiya',r:'SYD Support',l:'SYD',sal:65000,sup:7800,tot:74800,bmo:6233,j:5187,f:5600,m:5600,a:2052,t:'Payroll'},
+  {n:'Esther',r:'Sales (PT)',l:'BNE',sal:64000,sup:7680,tot:71680,bmo:5973,j:2902,f:2902,m:6335,a:2445,t:'PT Hourly'},
+  {n:'Miranda',r:'Service',l:'BNE',sal:49301,sup:5916,tot:55217,bmo:4601,j:3610,f:4247,m:4247,a:1644,t:'Hourly'},
+  {n:'Woojeung',r:'Admin/Teaching',l:'BNE',sal:49335,sup:0,tot:49335,bmo:4111,j:1990,f:3660,m:3946,a:0,t:'Contractor'},
+  {n:'Sophia',r:'Consultant',l:'BNE',sal:40000,sup:0,tot:40000,bmo:3333,j:1667,f:3546,m:3546,a:0,t:'Contractor'},
+  {n:'Cassie',r:'Consultant',l:'BNE',sal:10963,sup:0,tot:10963,bmo:914,j:346,f:1529,m:461,a:0,t:'Contractor'},
+  {n:'New Hire 1',r:'Service (TBD)',l:'BNE',sal:0,sup:0,tot:0,bmo:0,j:0,f:0,m:0,a:0,t:'Payroll',start:'Apr 30'},
+  {n:'New Hire 2',r:'Service (TBD)',l:'BNE',sal:0,sup:0,tot:0,bmo:0,j:0,f:0,m:0,a:0,t:'Payroll',start:'Apr 30'}
 ];
 
 /* VET Teaching Staff — Lena (budget) + casual teachers from Xero Fn-VET calendar */
 var VET_STAFF = [
   {n:'Lena Lee Law',r:'ECEC Teacher',l:'BNE',sal:85000,sup:10200,tot:95200,bmo:7933,
-   grossFn:3269,supFn:392,totalFn:3662,j:7322,f:7322,m:3662,nt:'Salaried. Budget = Lena only.'},
+   grossFn:3269,supFn:392,totalFn:3662,j:7322,f:7322,m:3662,a:3662,nt:'Salaried. Budget = Lena only.'},
   {n:'Ram Prasad Acharya',r:'VET Casual',l:'BNE',sal:0,sup:0,tot:0,bmo:0,
-   grossFn:0,supFn:0,totalFn:0,j:3080,f:3528,m:2016,nt:'Casual, variable hours. Non-budget.'},
+   grossFn:0,supFn:0,totalFn:0,j:3080,f:3528,m:2016,a:0,nt:'Casual, variable hours. Non-budget.'},
   {n:'Benjamin Seah',r:'VET Casual',l:'BNE',sal:0,sup:0,tot:0,bmo:0,
-   grossFn:0,supFn:0,totalFn:0,j:3360,f:1680,m:0,nt:'Departed after Fn3 (Feb 4).'},
+   grossFn:0,supFn:0,totalFn:0,j:3360,f:1680,m:0,a:0,nt:'Departed after Fn3 (Feb 4).'},
   {n:'Pelin Tatlidil',r:'VET Casual',l:'BNE',sal:0,sup:0,tot:0,bmo:0,
-   grossFn:0,supFn:0,totalFn:0,j:308,f:0,m:0,nt:'One-off Fn1 only.'}
+   grossFn:0,supFn:0,totalFn:0,j:308,f:0,m:0,a:0,nt:'One-off Fn1 only.'}
 ];
 
 /* ELICOS Teaching Staff — Jan/Feb/Mar data (gross wages from Xero payroll) */
 var EL_STAFF = [
-  {n:'Eunice Calaguas',r:'Teacher',l:'BNE',rate:78,j:5070,f:7215,m:3900,s:'Ongoing'},
-  {n:'Wesley Oliver',r:'Teacher',l:'BNE',rate:78,j:5070,f:7410,m:3510,s:'Ongoing'},
-  {n:'Flora Capacci',r:'Teacher',l:'BNE',rate:62,j:2170,f:3720,m:2170,s:'Ongoing'},
-  {n:'Julia Knieper',r:'Teacher',l:'BNE',rate:62,j:1860,f:2170,m:930,s:'Ongoing'},
-  {n:'Joseph Rinella',r:'Contractor',l:'BNE',rate:78,j:3582,f:7860,m:3900,s:'Ongoing'},
-  {n:'Elisha Sharma',r:'Teacher (Casual)',l:'SYD',rate:62,j:1550,f:3720,m:2695,s:'Ongoing'},
-  {n:'Paul Besaans',r:'Teacher',l:'BNE',rate:67,j:2680,f:0,m:0,s:'Jan only'},
-  {n:'Olena Dmytriieva',r:'Teacher',l:'BNE',rate:62,j:1488,f:0,s:'Jan only'},
-  {n:'Anna Skorobach',r:'Teacher (Casual)',l:'SYD',rate:62,j:4030,f:6055,m:1760,s:'Ongoing'},
-  {n:'Mila Izyumskaya',r:'Contractor',l:'SYD',rate:67,j:2010,f:2345,m:670,s:'Ongoing'},
-  {n:'Kathryn McMillan',r:'Contractor',l:'BNE',rate:67,j:1633,f:0,m:0,s:'Jan only'}
+  {n:'Eunice Calaguas',r:'Teacher',l:'BNE',rate:78,j:5070,f:7215,m:7800,a:3900,s:'Ongoing'},
+  {n:'Wesley Oliver',r:'Teacher',l:'BNE',rate:78,j:5070,f:7410,m:7410,a:3900,s:'Ongoing'},
+  {n:'Joseph Rinella',r:'Contractor',l:'BNE',rate:78,j:3582,f:7860,m:7839,a:3900,s:'Ongoing'},
+  {n:'Anna Skorobach',r:'Teacher (Casual)',l:'SYD',rate:62,j:4030,f:6055,m:4220,a:1230,s:'Ongoing'},
+  {n:'Elisha Sharma',r:'Teacher (Casual)',l:'SYD',rate:62,j:1550,f:3720,m:3935,a:2170,s:'Ongoing'},
+  {n:'Flora Capacci',r:'Teacher',l:'BNE',rate:62,j:2170,f:3720,m:2790,a:0,s:'Ongoing'},
+  {n:'Mila Izyumskaya',r:'Contractor',l:'SYD',rate:67,j:2010,f:2345,m:670,a:0,s:'Ongoing'},
+  {n:'Eloise Field',r:'Contractor',l:'BNE',rate:67,j:0,f:1766,m:0,a:0,s:'Feb only'},
+  {n:'Karenne McClure',r:'Contractor',l:'BNE',rate:67,j:0,f:1813,m:1377,a:0,s:'Feb-Mar'},
+  {n:'Kathryn McMillan',r:'Contractor',l:'BNE',rate:67,j:1633,f:0,m:1456,a:0,s:'Jan+Mar'},
+  {n:'Julia Knieper',r:'Teacher',l:'BNE',rate:62,j:1860,f:2170,m:1426,a:0,s:'Jan-Mar'},
+  {n:'Paul Besaans',r:'Teacher',l:'BNE',rate:67,j:2680,f:0,m:0,a:0,s:'Jan only'},
+  {n:'Olena Dmytriieva',r:'Teacher',l:'BNE',rate:62,j:1488,f:0,m:0,a:0,s:'Jan only'}
 ];
 
 /* ========== UTILITIES ========== */
@@ -189,9 +191,9 @@ var SUP_PAYROLL = {bne:44094,syd:18125,overdueBne:20503,overdueSyd:10000};
 /* Monthly new super from payroll accruals + payments (Xero Super Payable account 826) */
 var SUP_ACT = [
   {mo:'Jan',bne:9479,syd:3205,paid:1087},
-  {mo:'Feb',bne:9301,syd:3582,paid:56642},
-  {mo:'Mar',bne:9240,syd:2488,paid:9250,partial:true},
-  {mo:'Apr',bne:null,syd:null,paid:null},{mo:'May',bne:null,syd:null,paid:null},
+  {mo:'Feb',bne:9425,syd:3582,paid:56642},
+  {mo:'Mar',bne:9240,syd:2488,paid:9250},
+  {mo:'Apr',bne:4085,syd:1114,paid:0,partial:true},{mo:'May',bne:null,syd:null,paid:null},
   {mo:'Jun',bne:null,syd:null,paid:null},{mo:'Jul',bne:null,syd:null,paid:null},
   {mo:'Aug',bne:null,syd:null,paid:null},{mo:'Sep',bne:null,syd:null,paid:null},
   {mo:'Oct',bne:null,syd:null,paid:null},{mo:'Nov',bne:null,syd:null,paid:null},
