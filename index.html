@@ -35,7 +35,7 @@ var BarChart=RC.BarChart, Bar=RC.Bar, LineChart=RC.LineChart, Line=RC.Line,
 
 /* ========== DATA CONSTANTS ========== */
 var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var DATA_DATE = 'Apr 13, 2026';
+var DATA_DATE = 'Jul 31, 2026';
 
 /* 26 Fortnight Pay Dates (Mon-Sun aligned, Xero payroll) */
 var PAY_DATES = [
@@ -47,7 +47,7 @@ var PAY_DATES = [
 ];
 /* Month index for each fortnight (0=Jan...11=Dec) */
 var FN_MONTH = [0,0,1,1,2,2,3,3,3,4,4,5,5,6,6,7,7,8,8,9,9,9,10,10,11,11];
-var CURRENT_FN = 8; /* 0-based: Fn9 is latest with data */
+var CURRENT_FN = 14; /* 0-based: Fn15 is latest with data */
 
 /* --- Budgets: total cost (wages + super) per fortnight --- */
 /* GS: 2026 pro-rated. Fn1-7: 14 people ($41,397/fn). Fn8: -Iris -Mika ($36,135/fn). Fn9+: -Mia +2 new ($37,289/fn) */
@@ -79,19 +79,19 @@ var VET_NET_RATIO = 0.79;
 
 /* --- Actuals: P&L wages per fn (cash basis, from HR03+HR24+HR23+5-4251 journals) --- */
 /* GS: Xero transactions mapped to fortnights. Total = GS_PNL_TOTAL ($260,585) */
-var GS_ACT = [41902,44314,41966,61317,39046,32773,42361,48957,750];
+var GS_ACT = [41902,44314,41966,61317,39046,36234,42361,48957,28788,28298,58172,36409,41554,36964,36682];
 /* ELICOS: Xero BNE+SYD ELICOS payroll + contractor invoices. Fn1 low = Christmas shutdown */
-var EL_ACT = [8653,25446,19074,19736,18126,16823,14144,8530,0];
+var EL_ACT = [8653,25446,19074,19736,18126,16823,14144,8530,12965,12493,13936,13791,13897,9697,24468];
 /* VET: Xero Fn-VET payroll (Lena + casual teachers). Budget = Lena only */
-var VET_ACT = [5944,6619,7953,6024,5069,2040,2040,0,0];
+var VET_ACT = [5944,6619,7953,6024,5069,2040,2040,0,0,0,0,0,0,3182,7375];
 
 /* VET P&L Account Breakdown — BNE Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne */
 var VET_PNL = [
-  {code:'HR04',name:'Wages and Salaries - VET',ytd:32901},
+  {code:'HR04',name:'Wages and Salaries - VET',ytd:43458},
   {code:'HR20',name:'Service Fee(VET)-Ready Teacher',ytd:2789},
 ];
-var VET_PNL_TOTAL = 35690; /* Total VET P&L wages (ex-super) */
+var VET_PNL_TOTAL = 46247; /* Total VET P&L wages (ex-super) */
 var LENA_GR_FN = 3269; /* Lena gross wages per fn (salaried) */
 var LENA_NET_FN = 2575; /* Actual net pay per fn from Xero payslip ($2,575.23) */
 var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
@@ -99,26 +99,26 @@ var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
 /* General Staff P&L — HR-General Staff section, Cash Basis Jan 1 – Mar 7 2026 */
 /* Source: Xero P&L screenshot from Peter */
 var GS_PNL = [
-  {code:'HR03',name:'Wages and Salaries-Operation',ytd:229008},
-  {code:'5-4251',name:'Consulting and Professional Fees',ytd:57211},
-  {code:'HR24',name:'Sydney HR - General Staff',ytd:52853},
-  {code:'HR23',name:'Study Tour Representing Expense',ytd:14315},
+  {code:'HR03',name:'Wages and Salaries-Operation',ytd:388566},
+  {code:'5-4251',name:'Consulting and Professional Fees',ytd:111255},
+  {code:'HR24',name:'Sydney HR - General Staff',ytd:84124},
+  {code:'HR23',name:'Study Tour Representing Expense',ytd:39020},
 ];
-var GS_PNL_TOTAL = 353387;
+var GS_PNL_TOTAL = 622965;
 var GS_WAGES_BYR = 916560; /* Annual wages budget (ex-super), 2026 pro-rated: -Iris(fn7) -Mika(fn7) -Mia(fn8) +2 new(fn9) */
 
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
 var EL_PNL = [
-  {src:'BNE',code:'HR16',name:'Wages and Salaries - U18 ELICOS',ytd:88716},
-  {src:'BNE',code:'HR25',name:'Sydney Teaching - U18 ELICOS',ytd:27482},
+  {src:'BNE',code:'HR16',name:'Wages and Salaries - U18 ELICOS',ytd:162602},
+  {src:'BNE',code:'HR25',name:'Sydney Teaching - U18 ELICOS',ytd:46958},
   {src:'BNE',code:'HR05',name:'Wages and Salaries - Adult ELICOS',ytd:13619},
+  {src:'BNE',code:'HR17',name:'Wages and Salaries - Young Learner Camp',ytd:7887},
   {src:'BNE',code:'HR07',name:'Service fee(Adult ELICOS)-Ready Teacher',ytd:714},
   {src:'BNE',code:'QHR05',name:'Service Fee(Adult ELICOS)-Qstaff',ytd:0},
-  {src:'BNE',code:'HR17',name:'Wages and Salaries - Young Learner Camp',ytd:0},
 ];
-var EL_PNL_TOTAL = 130531; /* Total ELICOS Teaching Cost — BNE International only */
-var EL_TUITION_U18 = 4277; /* Account 4-1200 Tuition Fee U18 ELICOS — Xero Cash Basis YTD */
+var EL_PNL_TOTAL = 231779; /* Total ELICOS Teaching Cost — BNE International only */
+var EL_TUITION_U18 = 217910; /* Account 4-1200 Tuition Fee U18 ELICOS — Xero Cash Basis YTD */
 var EL_SUPER_RATE = 0.06; /* Effective blended: 50% employee × 12% + 50% contractor × 0% */
 var EL_WAGES_BYR = 331380; /* Annual wages ex-super */
 var EL_SHIFT = [
@@ -187,14 +187,17 @@ function fmtPct(n){return n==null?'\u2014':(n>=0?'+':'')+n.toFixed(1)+'%';}
 
 /* Payroll Super Liability (from Xero Payroll Super Payment page, 9 Mar 2026) */
 /* Total = what Payroll says is owed to super funds. Overdue = pre-2026 quarters */
-var SUP_PAYROLL = {bne:44094,syd:18125,overdueBne:20503,overdueSyd:10000};
+var SUP_PAYROLL = {bne:30463,syd:20225,overdueBne:20503,overdueSyd:10000}; /* Baseline method: payroll page 2026-03-09 + BS Super Payable movement to 2026-07-31 */
 /* Monthly new super from payroll accruals + payments (Xero Super Payable account 826) */
 var SUP_ACT = [
   {mo:'Jan',bne:9479,syd:3205,paid:1087},
   {mo:'Feb',bne:9425,syd:3582,paid:56642},
-  {mo:'Mar',bne:9656,syd:2488,paid:9250},
-  {mo:'Apr',bne:7389,syd:2118,paid:10402},
-  {mo:'May',bne:null,syd:null,paid:null},{mo:'Jun',bne:null,syd:null,paid:null},{mo:'Jul',bne:null,syd:null,paid:null},{mo:'Aug',bne:null,syd:null,paid:null},{mo:'Sep',bne:null,syd:null,paid:null},{mo:'Oct',bne:null,syd:null,paid:null},{mo:'Nov',bne:null,syd:null,paid:null},{mo:'Dec',bne:null,syd:null,paid:null}
+  {mo:'Mar',bne:10071,syd:2488,paid:9250},
+  {mo:'Apr',bne:10698,syd:3975,paid:15638},
+  {mo:'May',bne:7440,syd:2156,paid:5411},
+  {mo:'Jun',bne:7991,syd:2179,paid:32102},
+  {mo:'Jul',bne:10310,syd:2347,paid:23211},
+  {mo:'Aug',bne:null,syd:null,paid:null},{mo:'Sep',bne:null,syd:null,paid:null},{mo:'Oct',bne:null,syd:null,paid:null},{mo:'Nov',bne:null,syd:null,paid:null},{mo:'Dec',bne:null,syd:null,paid:null}
 ];
 /* Super budget per fn = monthly budget / fortnights in that month */
 var SUP_BFN=[];
