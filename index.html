@@ -88,8 +88,8 @@ var VET_ACT = [5944,6619,7953,6024,5069,2040,2040,0,0,0,0,0,0,3182,7375];
 /* VET P&L Account Breakdown — BNE Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne */
 var VET_PNL = [
-  {code:'HR04',name:'Wages and Salaries - VET',ytd:43458},
-  {code:'HR20',name:'Service Fee(VET)-Ready Teacher',ytd:2789},
+  {code:'HR04',name:'Wages and Salaries - VET',ytd:43458,note:'Payroll: Lena + casuals'},
+  {code:'HR20',name:'Service Fee(VET)-Ready Teacher',ytd:2789,note:'Agency invoice'},
 ];
 var VET_PNL_TOTAL = 46247; /* Total VET P&L wages (ex-super) */
 var LENA_GR_FN = 3269; /* Lena gross wages per fn (salaried) */
@@ -99,10 +99,10 @@ var LENA_TAX_FN = 694; /* Actual PAYG tax per fn from Xero payslip */
 /* General Staff P&L — HR-General Staff section, Cash Basis Jan 1 – Mar 7 2026 */
 /* Source: Xero P&L screenshot from Peter */
 var GS_PNL = [
-  {code:'HR03',name:'Wages and Salaries-Operation',ytd:388566},
-  {code:'5-4251',name:'Consulting and Professional Fees',ytd:111255},
-  {code:'HR24',name:'Sydney HR - General Staff',ytd:84124},
-  {code:'HR23',name:'Study Tour Representing Expense',ytd:39020},
+  {code:'HR03',name:'Wages and Salaries-Operation',ytd:388566,byr:503262,note:'BNE payroll staff (pro-rated: -Iris fn7, -Mika fn7, -Mia fn8, +2 new fn9)'},
+  {code:'5-4251',name:'Consulting and Professional Fees',ytd:111255,byr:220298,note:'Peter+Woojeong+Cassie (HR only)'},
+  {code:'HR24',name:'Sydney HR - General Staff',ytd:84124,byr:153000,note:'Damon+Tiya net. \u26a0 Inc. Anna/Elisha ELICOS wages + SYD super (misallocated)'},
+  {code:'HR23',name:'Study Tour Representing Expense',ytd:39020,byr:40000,note:'Sophia contractor'},
 ];
 var GS_PNL_TOTAL = 622965;
 var GS_WAGES_BYR = 916560; /* Annual wages budget (ex-super), 2026 pro-rated: -Iris(fn7) -Mika(fn7) -Mia(fn8) +2 new(fn9) */
@@ -110,12 +110,12 @@ var GS_WAGES_BYR = 916560; /* Annual wages budget (ex-super), 2026 pro-rated: -I
 /* ELICOS P&L Account Breakdown — BNE+SYD Cash Basis, Jan 1 – Mar 7 2026 */
 /* Source: node xero_pnl.js 2026-01-01 2026-03-07 --tenant=bne/syd */
 var EL_PNL = [
-  {src:'BNE',code:'HR16',name:'Wages and Salaries - U18 ELICOS',ytd:162602},
-  {src:'BNE',code:'HR25',name:'Sydney Teaching - U18 ELICOS',ytd:46958},
-  {src:'BNE',code:'HR05',name:'Wages and Salaries - Adult ELICOS',ytd:13619},
-  {src:'BNE',code:'HR17',name:'Wages and Salaries - Young Learner Camp',ytd:7887},
-  {src:'BNE',code:'HR07',name:'Service fee(Adult ELICOS)-Ready Teacher',ytd:714},
-  {src:'BNE',code:'QHR05',name:'Service Fee(Adult ELICOS)-Qstaff',ytd:0},
+  {cat:'ELICOS Teaching Cost',code:'HR16',name:'Wages and Salaries - U18 ELICOS',ytd:162602,bud:1,note:'HSP/PEP classes'},
+  {cat:'ELICOS Teaching Cost',code:'HR25',name:'Sydney Teaching - U18 ELICOS',ytd:46958,bud:0,note:'SYD ELICOS teachers (Anna, Elisha)'},
+  {cat:'ELICOS Teaching Cost',code:'HR05',name:'Wages and Salaries - Adult ELICOS',ytd:13619,bud:0,note:'HSP BNE + PEP BNE teachers'},
+  {cat:'ELICOS Teaching Cost',code:'HR17',name:'Wages and Salaries - Young Learner Camp',ytd:7887,bud:0,note:'YLC teachers'},
+  {cat:'ELICOS Teaching Cost',code:'HR07',name:'Service fee(Adult ELICOS)-Ready Teacher',ytd:714,bud:0,note:'Agency fee'},
+  {cat:'ELICOS Teaching Cost',code:'QHR05',name:'Service Fee(Adult ELICOS)-Qstaff',ytd:0,bud:0,note:'No activity'},
 ];
 var EL_PNL_TOTAL = 231779; /* Total ELICOS Teaching Cost — BNE International only */
 var EL_TUITION_U18 = 217910; /* Account 4-1200 Tuition Fee U18 ELICOS — Xero Cash Basis YTD */
